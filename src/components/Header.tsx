@@ -11,7 +11,7 @@ const Header = () => {
             <Button variant="secondary" size="lg" className="bg-lime-400 text-black hover:bg-lime-300 rounded-full px-8 py-3 text-base font-medium shadow-lg">
               Contact Us
             </Button>
-            <Menu className="h-6 w-6 text-primary-foreground" />
+            <Menu className="h-11 w-11 text-primary-foreground" />
           </div>
         </div>
       </div>
