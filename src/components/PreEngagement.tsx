@@ -16,7 +16,7 @@ const PreEngagement = ({
     }
   };
   return <div className="flex-1 flex items-center justify-center py-16 px-6">
-      <div className="text-center max-w-2xl mx-auto mt-[100px]">
+      <div className="text-center mx-auto mt-[100px]">
         <div className="mb-10">
           
           
