@@ -30,11 +30,6 @@ const PreEngagement = ({
           </div>
         </form>
 
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-2xl mx-auto">
-          {["I need help with conversion rate optimization", "Tell me about your digital marketing services", "I want to improve my website's performance"].map((suggestion, index) => <Button key={index} variant="outline" onClick={() => onStartChat(suggestion)} className="text-left justify-start h-auto p-5 whitespace-normal text-base">
-              {suggestion}
-            </Button>)}
-        </div>
       </div>
     </div>;
 };
