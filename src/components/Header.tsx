@@ -6,7 +6,7 @@ const Header = () => {
   return (
     <header className="bg-primary text-primary-foreground">
       {/* Top Navigation Bar */}
-      <div className="container mx-auto px-6 py-4">
+      <div className="container mx-auto px-6 py-4 pt-28">
         <div className="flex items-center justify-between">
           <img 
             src={primacyLogo} 
