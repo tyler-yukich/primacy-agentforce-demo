@@ -17,7 +17,7 @@ const Header = () => {
             <Button 
               variant="secondary"
               size="lg"
-              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 py-3 text-base font-medium"
+              className="bg-lime-400 text-black hover:bg-lime-300 rounded-full px-8 py-3 text-base font-medium shadow-lg"
             >
               Contact Us
             </Button>
