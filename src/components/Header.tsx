@@ -16,8 +16,8 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <Button 
               variant="secondary"
-              size="sm"
-              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-6"
+              size="lg"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8 py-3 text-base font-medium"
             >
               Contact Us
             </Button>
