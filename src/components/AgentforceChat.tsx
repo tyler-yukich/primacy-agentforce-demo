@@ -33,7 +33,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [userData, setUserData] = useState<UserData>({});
-  const [currentStep, setCurrentStep] = useState<'greeting' | 'firstName' | 'lastName' | 'email' | 'company' | 'industry' | 'complete'>('greeting');
+  const [currentStep, setCurrentStep] = useState<'greeting' | 'discovery' | 'exploration' | 'needs_assessment' | 'firstName' | 'lastName' | 'email' | 'company' | 'industry' | 'complete'>('greeting');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,9 +71,12 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
         isUser: false
       }]);
       
-      // Advance to next step
+      // Advance to next step with enhanced conversational flow
       const stepSequence: Record<string, string> = {
-        greeting: 'firstName',
+        greeting: 'discovery',
+        discovery: 'exploration', 
+        exploration: 'needs_assessment',
+        needs_assessment: 'firstName',
         firstName: 'lastName',
         lastName: 'email',
         email: 'company',
@@ -113,6 +116,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
     } else if (currentStep === 'industry') {
       newUserData.industry = userMessage;
     }
+    // For conversational steps, we don't store specific data but keep the conversation context
     setUserData(newUserData);
 
     setInputValue("");
@@ -136,8 +140,11 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
         isUser: false
       }]);
       
-      // Advance to next step
+      // Advance to next step with enhanced conversational flow
       const stepSequence: Record<string, string> = {
+        discovery: 'exploration',
+        exploration: 'needs_assessment', 
+        needs_assessment: 'firstName',
         firstName: 'lastName',
         lastName: 'email',
         email: 'company',

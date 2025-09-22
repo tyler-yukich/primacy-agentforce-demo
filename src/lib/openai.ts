@@ -7,41 +7,153 @@ interface ChatRequest {
   userData: any;
 }
 
+// Primacy's fictional knowledge base for demo purposes
+const PRIMACY_KNOWLEDGE = {
+  caseStudies: [
+    "We helped a SaaS company increase their conversion rate from 2.1% to 4.8% by optimizing their checkout flow and implementing personalized CTAs",
+    "A Connecticut-based e-commerce client saw a 67% increase in organic traffic after our comprehensive SEO strategy and site optimization",
+    "We boosted a B2B manufacturer's lead generation by 340% through strategic PPC campaigns and landing page optimization",
+    "Our team helped a healthcare startup reduce their customer acquisition cost by 45% while doubling their monthly leads"
+  ],
+  services: {
+    "conversion optimization": "Our CRO team uses advanced A/B testing, heatmap analysis, and user journey optimization to maximize your conversion rates",
+    "digital marketing": "We offer comprehensive digital marketing including PPC, SEO, social media, content marketing, and marketing automation",
+    "website performance": "Our web development team specializes in Core Web Vitals optimization, page speed enhancement, and mobile-first design",
+    "seo": "Our SEO specialists focus on technical SEO, content strategy, and local search optimization with proven results",
+    "ppc": "We manage Google Ads, Microsoft Ads, and social media advertising with a focus on ROI and conversion tracking"
+  },
+  expertise: "Primacy is a full-service 360° digital marketing agency based in Connecticut. We've been helping businesses grow online for over 15 years with our data-driven approach and creative solutions."
+};
+
 export const generateAgentResponse = async (request: ChatRequest): Promise<string> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   const { message, step, userData } = request;
+  const userInput = message.toLowerCase();
 
-  // Mock responses based on conversation flow
+  // Enhanced conversational responses with Primacy knowledge
   const responses: Record<string, string> = {
-    greeting: `Hi there! That's awesome — I'd love to learn more about how Primacy can help you with that! I'm Agentforce, and I'm here to connect you with the right person on our team. To get started, what's your first name?`,
+    greeting: generateGreetingResponse(userInput),
     
-    firstName: `Nice to meet you, ${userData.firstName}! And what's your last name?`,
+    discovery: generateDiscoveryResponse(userInput, userData),
     
-    lastName: `Perfect! Could you please share your email address so someone from our team can reach out to you?`,
+    exploration: generateExplorationResponse(userInput, userData),
     
-    email: `Great! What company do you work for? (This helps us understand your needs better)`,
+    needs_assessment: generateNeedsAssessmentResponse(userInput, userData),
     
-    company: `Excellent! What industry is ${userData.company || 'your company'} in? This will help us connect you with the right team member.`,
+    firstName: `Thanks for sharing more about your situation, ${userData.firstName || 'there'}! This sounds like something our team can definitely help with. To make sure I connect you with the right specialist, what's your last name?`,
     
-    industry: `Thanks, ${userData.firstName}! I've got all the information I need. One of our team members will be in touch shortly to discuss how Primacy can help ${userData.company || 'your business'} achieve its goals. Have a great day!`
+    lastName: `Perfect, ${userData.firstName}! Could you share your email address so our team can send you some relevant case studies and set up a consultation?`,
+    
+    email: `Great! What company do you work for? This helps us understand your business context better.`,
+    
+    company: `Excellent! What industry is ${userData.company || 'your company'} in? This will help us connect you with a specialist who has experience in your sector.`,
+    
+    industry: `Perfect, ${userData.firstName}! Based on everything you've shared, I think our team can provide some valuable insights for ${userData.company || 'your business'}. One of our specialists will reach out within 24 hours with some initial recommendations and to schedule a strategic consultation. Thanks for your time!`
   };
 
-  // For the initial greeting, customize based on user's input
-  if (step === 'greeting') {
-    const userInput = message.toLowerCase();
-    if (userInput.includes('conversion') || userInput.includes('cro')) {
-      return `That's fantastic! Conversion rate optimization is one of Primacy's specialties. I'd love to learn more about your specific needs and connect you with our CRO experts. To get started, what's your first name?`;
-    } else if (userInput.includes('marketing') || userInput.includes('digital')) {
-      return `Excellent! Digital marketing is right in our wheelhouse. We'd love to help you drive better results. I'm Agentforce, and I'll get you connected with the right specialist. What's your first name?`;
-    } else if (userInput.includes('website') || userInput.includes('performance')) {
-      return `Perfect! Website performance optimization is something our team excels at. I'd love to learn more about your goals and get you connected with the right expert. What's your first name?`;
+  return responses[step] || generateGenericResponse(userInput);
+};
+
+function generateGreetingResponse(userInput: string): string {
+  if (userInput.includes('conversion') || userInput.includes('cro')) {
+    return `Conversion rate optimization - that's one of our strongest areas! We've helped clients achieve some impressive results. For example, ${PRIMACY_KNOWLEDGE.caseStudies[0]}. What's your current conversion rate, and where do you think the biggest opportunities might be?`;
+  } 
+  
+  if (userInput.includes('traffic') || userInput.includes('seo')) {
+    return `SEO and traffic growth - excellent! ${PRIMACY_KNOWLEDGE.caseStudies[1]}. What's your biggest challenge right now - getting found in search, or converting the traffic you already have?`;
+  }
+  
+  if (userInput.includes('leads') || userInput.includes('lead generation')) {
+    return `Lead generation is something we're really passionate about! ${PRIMACY_KNOWLEDGE.caseStudies[2]}. What's your current lead volume like, and what's your biggest bottleneck?`;
+  }
+  
+  if (userInput.includes('marketing') || userInput.includes('digital')) {
+    return `Digital marketing - that's our bread and butter! ${PRIMACY_KNOWLEDGE.expertise} What specific area of your marketing feels like it needs the most attention right now?`;
+  }
+  
+  if (userInput.includes('website') || userInput.includes('performance')) {
+    return `Website performance is crucial for conversions! Our development team specializes in making sites lightning-fast. What issues are you seeing - slow load times, poor mobile experience, or something else?`;
+  }
+  
+  return `That's a great question! I'd love to learn more about your specific situation so I can give you the most helpful information. What's the biggest challenge you're facing with your digital presence right now?`;
+}
+
+function generateDiscoveryResponse(userInput: string, userData: any): string {
+  if (userInput.includes('competitor') || userInput.includes('competition')) {
+    return `Competition can definitely be tough! We've helped many clients outperform their competitors through strategic positioning and optimization. What do you think your competitors are doing that you're not? And what advantages do you think you have that we could leverage better?`;
+  }
+  
+  if (userInput.includes('budget') || userInput.includes('cost')) {
+    return `Budget is always an important consideration. The good news is that digital marketing can be scaled to fit different budgets, and we focus on ROI from day one. What kind of results would make a marketing investment feel worthwhile to you?`;
+  }
+  
+  if (userInput.includes('tried') || userInput.includes('attempt')) {
+    return `It sounds like you've done some experimenting already - that's smart! What have you tried before, and what kind of results did you see? Understanding what hasn't worked helps us avoid those pitfalls and focus on what will move the needle.`;
+  }
+  
+  return `That's really helpful context! ${generateCaseStudyExample(userInput)} What would success look like for you - are you more focused on increasing traffic, improving conversions, or generating more qualified leads?`;
+}
+
+function generateExplorationResponse(userInput: string, userData: any): string {
+  if (userInput.includes('timeline') || userInput.includes('when') || userInput.includes('time')) {
+    return `Timeline expectations are important to set upfront. Some improvements can happen quickly (like PPC optimization), while others build over time (like SEO). What's driving your timeline - is there a particular deadline or goal you're working toward?`;
+  }
+  
+  if (userInput.includes('team') || userInput.includes('internal')) {
+    return `It's great that you're thinking about team dynamics! We work best as an extension of our clients' teams. Do you have internal marketing resources, or would we be handling most of the digital marketing strategy and execution?`;
+  }
+  
+  return `Based on what you're telling me, this sounds like exactly the type of challenge our team loves to tackle. ${generateRelevantExpertise(userInput)} Would you like me to connect you with one of our specialists who can dive deeper into your specific situation?`;
+}
+
+function generateNeedsAssessmentResponse(userInput: string, userData: any): string {
+  if (userInput.includes('yes') || userInput.includes('interested') || userInput.includes('connect')) {
+    return `Fantastic! I'd love to get you connected with the right person on our team. They'll be able to provide some specific recommendations based on everything we've discussed. What's your first name?`;
+  }
+  
+  if (userInput.includes('information') || userInput.includes('learn')) {
+    return `Of course! I'd be happy to share more information. ${generateServiceInfo(userInput)} Would you like me to have someone send you some relevant case studies and insights, or do you have other specific questions?`;
+  }
+  
+  return `I understand you might want to think it over. ${generateCaseStudyExample(userInput)} Would it be helpful if I had someone from our team send you some relevant case studies and insights with no pressure to move forward?`;
+}
+
+function generateCaseStudyExample(userInput: string): string {
+  if (userInput.includes('ecommerce') || userInput.includes('e-commerce') || userInput.includes('online store')) {
+    return PRIMACY_KNOWLEDGE.caseStudies[1];
+  }
+  if (userInput.includes('b2b') || userInput.includes('manufacturing') || userInput.includes('business')) {
+    return PRIMACY_KNOWLEDGE.caseStudies[2];
+  }
+  if (userInput.includes('startup') || userInput.includes('healthcare') || userInput.includes('acquisition')) {
+    return PRIMACY_KNOWLEDGE.caseStudies[3];
+  }
+  return PRIMACY_KNOWLEDGE.caseStudies[0];
+}
+
+function generateRelevantExpertise(userInput: string): string {
+  for (const [key, value] of Object.entries(PRIMACY_KNOWLEDGE.services)) {
+    if (userInput.includes(key)) {
+      return value;
     }
   }
+  return PRIMACY_KNOWLEDGE.expertise;
+}
 
-  return responses[step] || "Thanks for that information! Could you tell me a bit more?";
-};
+function generateServiceInfo(userInput: string): string {
+  for (const [key, value] of Object.entries(PRIMACY_KNOWLEDGE.services)) {
+    if (userInput.includes(key)) {
+      return value;
+    }
+  }
+  return "Our comprehensive approach includes strategy development, implementation, and ongoing optimization across all digital channels.";
+}
+
+function generateGenericResponse(userInput: string): string {
+  return "That's great information! Tell me more about what's driving this need and what success would look like for you.";
+}
 
 export const mockOpenAIAPI = {
   chat: {
