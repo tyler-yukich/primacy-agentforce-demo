@@ -29,7 +29,7 @@ const Header = () => {
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-16 md:py-24">
         <div className="text-center relative">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-light mb-8">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-light mb-8">
             Want to Chat?
           </h1>
           
