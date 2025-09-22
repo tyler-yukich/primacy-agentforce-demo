@@ -23,7 +23,7 @@ const PreEngagement = ({
           <p className="text-xl text-muted-foreground max-w-lg mx-auto">Agentforce is our digital assistant built to help Primacy connect faster with prospective clients.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+        <form onSubmit={handleSubmit} className="max-w-5xl mx-auto">
           <div className="flex gap-2">
             <Input value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Type your question or tell us what you need help with..." className="flex-1 h-12 text-base" />
             <Button type="submit" size="lg" disabled={!inputValue.trim()} className="bg-primary hover:bg-primary-dark h-12 px-6">
