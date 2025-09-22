@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import primacyLogo from "@/assets/primacy_horizontal.svg";
 
 const Header = () => {
   return (
@@ -6,7 +7,11 @@ const Header = () => {
       <div className="container mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-2">PRIMACY_</h1>
+            <img 
+              src={primacyLogo} 
+              alt="Primacy" 
+              className="h-12 md:h-16 mb-2"
+            />
             <p className="text-xl md:text-2xl opacity-90">Looking for a results-driven partner?</p>
           </div>
           <Button 
