@@ -1,26 +1,45 @@
 import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 import primacyLogo from "@/assets/primacy_horizontal.svg";
 
 const Header = () => {
   return (
-    <header className="bg-primary text-primary-foreground py-8 px-6">
-      <div className="container mx-auto">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <img 
-              src={primacyLogo} 
-              alt="Primacy" 
-              className="h-12 md:h-16 mb-2"
-            />
-            <p className="text-xl md:text-2xl opacity-90">Looking for a results-driven partner?</p>
+    <header className="bg-primary text-primary-foreground">
+      {/* Top Navigation Bar */}
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <img 
+            src={primacyLogo} 
+            alt="Primacy" 
+            className="h-6 md:h-8"
+          />
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="secondary"
+              size="sm"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-6"
+            >
+              Contact Us
+            </Button>
+            <Menu className="h-6 w-6 text-primary-foreground" />
           </div>
-          <Button 
-            variant="outline" 
-            size="lg"
-            className="bg-primary-dark border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary-dark transition-colors duration-200"
-          >
-            Let's Talk
-          </Button>
+        </div>
+      </div>
+      
+      {/* Hero Section */}
+      <div className="container mx-auto px-6 py-16 md:py-24">
+        <div className="text-center relative">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-light mb-8">
+            Want to Chat?
+          </h1>
+          
+          {/* Vertical Green Lines */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-8">
+            <div className="flex gap-2">
+              <div className="w-0.5 h-16 bg-accent"></div>
+              <div className="w-0.5 h-16 bg-accent"></div>
+            </div>
+          </div>
         </div>
       </div>
     </header>
