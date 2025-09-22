@@ -15,7 +15,7 @@ const PreEngagement = ({
       onStartChat(inputValue.trim());
     }
   };
-  return <div className="flex-1 flex items-center justify-center py-16 px-6">
+  return <div className="flex-1 flex items-center justify-center py-32 px-6">
       <div className="text-center w-full max-w-screen-xl mx-auto mt-[100px]">
         <div className="mb-10">
           
