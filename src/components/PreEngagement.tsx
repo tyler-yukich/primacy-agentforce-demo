@@ -23,7 +23,7 @@ const PreEngagement = ({
           <p className="text-muted-foreground max-w-lg mx-auto text-4xl">How can we help?</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="max-w-5xl mx-auto">
+        <form onSubmit={handleSubmit} className="w-full mx-auto px-8">
           <div className="flex gap-3">
             <Input value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Type your question or tell us what you need help with..." className="flex-1 h-16 text-xl" />
             <Button type="submit" size="lg" disabled={!inputValue.trim()} className="bg-primary hover:bg-primary-dark h-16 px-8 text-2xl">↑</Button>
