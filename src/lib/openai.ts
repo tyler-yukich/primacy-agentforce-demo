@@ -107,25 +107,25 @@ export const generateAgentResponse = async (request: ChatRequest): Promise<strin
     
     needs_assessment: generateNeedsAssessmentResponse(userInput, userData),
     
-    firstName: `Thanks for sharing more about your situation, ${userData.firstName || 'there'}! This sounds like something our team can definitely help with. To make sure I connect you with the right specialist, what's your last name?`,
+    firstName: `Thanks for sharing more about your situation, ${userData.firstName || 'there'}! 😊\n\nThis sounds like something our team can definitely help with. To make sure I connect you with the right specialist, what's your last name?`,
     
-    lastName: `Perfect, ${userData.firstName}! Could you share your email address so our team can send you some relevant case studies and set up a consultation?`,
+    lastName: `Perfect, ${userData.firstName}! 👍\n\nCould you share your email address so our team can send you some relevant case studies and set up a consultation?`,
     
-    email: `Great! What company do you work for? This helps us understand your business context better.`,
+    email: `Great! 📧\n\nWhat company do you work for? This helps us understand your business context better.`,
     
-    company: `Excellent! What industry is ${userData.company || 'your company'} in? This will help us connect you with a specialist who has experience in your sector.`,
+    company: `Excellent! 🏢\n\nWhat industry is ${userData.company || 'your company'} in? This will help us connect you with a specialist who has experience in your sector.`,
     
-    industry: `Perfect, ${userData.firstName}! Based on everything you've shared, I think our team can provide some valuable insights for ${userData.company || 'your business'}. One of our specialists will reach out within 24 hours with some initial recommendations and to schedule a strategic consultation. Thanks for your time!`,
+    industry: `Perfect, ${userData.firstName}! ✨\n\nBased on everything you've shared, I think our team can provide some valuable insights for ${userData.company || 'your business'}.\n\nOne of our specialists will reach out within 24 hours with some initial recommendations and to schedule a strategic consultation.\n\nThanks for your time! 🚀`,
     
-    schedule_request: `Absolutely! Would you like to schedule time with someone on Primacy's Client Service team to have a conversation about your business? They can provide more detailed insights and explore how we might be able to help.`,
+    schedule_request: `Absolutely! 📅\n\nWould you like to schedule time with someone on Primacy's Client Service team to have a conversation about your business?\n\nThey can provide more detailed insights and explore how we might be able to help.`,
     
-    schedule_firstName: `Great! Let's get you scheduled. What's your first name?`,
+    schedule_firstName: `Great! 🎉 Let's get you scheduled.\n\nWhat's your first name?`,
     
-    schedule_lastName: `Thanks, ${userData.scheduleFirstName}! What's your last name?`,
+    schedule_lastName: `Thanks, ${userData.scheduleFirstName}! 👍\n\nWhat's your last name?`,
     
-    schedule_email: `Perfect! What's your email address so we can send you the calendar invite?`,
+    schedule_email: `Perfect! 📧\n\nWhat's your email address so we can send you the calendar invite?`,
     
-    schedule_company: `Excellent! What's your company name?`,
+    schedule_company: `Excellent! 🏢\n\nWhat's your company name?`,
     
     schedule_complete: generateScheduleOptions(userData)
   };
@@ -210,7 +210,7 @@ function generateContextualResponse(userInput: string): string | null {
   if (input.includes('education') || input.includes('school') || input.includes('university') || input.includes('college') || 
       input.includes('educational institution') || input.includes('higher ed')) {
     const suffolk = PRIMACY_KNOWLEDGE.industryExperience.suffolkUniversity;
-    return `Yes! We've done a lot of incredible award-winning work with educational institutions. One standout project is Suffolk University. We redesigned their entire website to differentiate them in Boston's competitive higher-ed market. The results were remarkable: ${suffolk.results[0]}, ${suffolk.results[1]}, and ${suffolk.results[2]}. We unified multiple school sites into one cohesive ecosystem and created interactive tools like a Program Finder and student narrative hub. Would you like to schedule time with someone on Primacy's Client Service team to have a conversation about your business?`;
+    return `Yes! 🎓 Primacy has done a lot of incredible award-winning work with educational institutions. One standout project is with Suffolk University.\n\n**Suffolk University Website Redesign** 🏛️\n\nWe helped Suffolk University differentiate itself in Boston's competitive higher-ed market by creating a digital presence that captures its unique urban identity.\n\n**Key Results:** 📊\n• ${suffolk.results[0]}\n• ${suffolk.results[1]} 🌍\n• ${suffolk.results[2]}\n• ${suffolk.results[3]}\n\n**The Challenge:** 🎯\nBoston is saturated with elite colleges. Suffolk needed to stand out as the only university in downtown Boston and connect with its diverse student audience - first-generation, international, and non-traditional students.\n\n**Our Approach:** ✨\n• Conducted extensive research including 8 rounds of usability testing\n• Audited 3,800+ website pages for SEO optimization\n• Built a new CMS using Sitecore.NET 9.0.1\n• Created interactive tools like a Program Finder and "My Suffolk Story" hub\n• Designed a fully responsive, accessibility-first experience\n\n**The Result?** 🚀\nA cohesive, high-performing web ecosystem that elevated Suffolk's identity as "the university that is Boston."\n\nWould you like to schedule time with someone on Primacy's Client Service team to discuss how we could help your business? 📅`;
   }
   
   if (input.includes('healthcare') || input.includes('medical') || input.includes('hospital') || input.includes('clinic')) {
@@ -300,7 +300,7 @@ function generateScheduleOptions(userData: any): string {
     options.push(`${dayName} at 10:00 AM EST or 2:00 PM EST`);
   }
   
-  return `Perfect, ${userData.scheduleFirstName}! Thank you for providing your information. Here are some available times for an initial call over the next 3 days:\n\n${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}\n\nWhich time works best for you? Our team will send a calendar invite to ${userData.scheduleEmail} once you confirm.`;
+  return `Perfect, ${userData.scheduleFirstName}! 🎉\n\nThank you for providing your information. Here are some available times for an initial call over the next 3 days:\n\n**Available Times:** ⏰\n${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}\n\nWhich time works best for you?\n\nOur team will send a calendar invite to ${userData.scheduleEmail} once you confirm. Looking forward to our conversation about ${userData.scheduleCompany}! 🚀`;
 }
 
 function generateGenericResponse(userInput: string): string {
