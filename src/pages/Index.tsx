@@ -20,17 +20,17 @@ const Index = () => {
       <Header />
       
       <main className="flex-1">
-        <PreEngagement onStartChat={handleStartChat} />
+        {chatMessage ? (
+          <AgentforceChat 
+            initialMessage={chatMessage}
+            onClose={handleCloseChat}
+          />
+        ) : (
+          <PreEngagement onStartChat={handleStartChat} />
+        )}
       </main>
 
       <Footer />
-
-      {chatMessage && (
-        <AgentforceChat 
-          initialMessage={chatMessage}
-          onClose={handleCloseChat}
-        />
-      )}
     </div>
   );
 };
