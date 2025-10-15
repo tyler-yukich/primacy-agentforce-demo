@@ -22,6 +22,29 @@ const PRIMACY_KNOWLEDGE = {
       "Worked with Connecticut Department of Education on statewide awareness campaign reaching 2M+ residents",
       "Assisted New Haven Community College boost enrollment by 40% through targeted digital campaigns"
     ],
+    suffolkUniversity: {
+      title: "Suffolk University Website Redesign",
+      objective: "Redesign Suffolk University's website to differentiate the school in a competitive Boston higher-ed market and connect with its uniquely diverse student audience.",
+      challenge: "Boston is saturated with elite colleges. Suffolk, the only university in downtown Boston, needed a digital presence that captured its urban identity and appeal to first-generation, international, and non-traditional students.",
+      approach: [
+        "Conducted stakeholder interviews, audience research, and 8 rounds of usability testing",
+        "Audited 3,800+ website pages for SEO and content consolidation",
+        "Developed mood boards and iterative design concepts informed by user data",
+        "Built a new CMS using Sitecore.NET 9.0.1 as a dynamic content and storytelling hub",
+        "Unified multiple school sites (admissions, arts & sciences, business, law, Madrid campus) into one ecosystem",
+        "Created interactive tools such as a Program Finder and the 'My Suffolk Story' hub for student narratives",
+        "Rebuilt taxonomy and governance for efficient content management and analytics"
+      ],
+      results: [
+        "26% increase in application starts across three schools",
+        "3.6M+ sessions from 223 countries",
+        "9.1M+ pageviews",
+        "144 new templates supporting over 9,000 pages",
+        "Improved engagement and sharing across students, alumni, and staff"
+      ],
+      technologies: "Sitecore.NET 9.0.1, AWS Cloud, GTM, Accessibility-first design, Custom taxonomy, Governance model",
+      outcome: "A cohesive, high-performing web ecosystem that elevated Suffolk's identity as 'the university that is Boston.'"
+    },
     healthcare: [
       "Reduced customer acquisition cost by 45% for Hartford HealthCare while doubling monthly leads",
       "Helped Yale New Haven Hospital improve patient portal adoption by 85% through user experience optimization",
@@ -92,7 +115,19 @@ export const generateAgentResponse = async (request: ChatRequest): Promise<strin
     
     company: `Excellent! What industry is ${userData.company || 'your company'} in? This will help us connect you with a specialist who has experience in your sector.`,
     
-    industry: `Perfect, ${userData.firstName}! Based on everything you've shared, I think our team can provide some valuable insights for ${userData.company || 'your business'}. One of our specialists will reach out within 24 hours with some initial recommendations and to schedule a strategic consultation. Thanks for your time!`
+    industry: `Perfect, ${userData.firstName}! Based on everything you've shared, I think our team can provide some valuable insights for ${userData.company || 'your business'}. One of our specialists will reach out within 24 hours with some initial recommendations and to schedule a strategic consultation. Thanks for your time!`,
+    
+    schedule_request: `Absolutely! Would you like to schedule time with someone on Primacy's Client Service team to have a conversation about your business? They can provide more detailed insights and explore how we might be able to help.`,
+    
+    schedule_firstName: `Great! Let's get you scheduled. What's your first name?`,
+    
+    schedule_lastName: `Thanks, ${userData.scheduleFirstName}! What's your last name?`,
+    
+    schedule_email: `Perfect! What's your email address so we can send you the calendar invite?`,
+    
+    schedule_company: `Excellent! What's your company name?`,
+    
+    schedule_complete: generateScheduleOptions(userData)
   };
 
   return responses[step] || generateGenericResponse(userInput);
@@ -171,10 +206,11 @@ function generateNeedsAssessmentResponse(userInput: string, userData: any): stri
 function generateContextualResponse(userInput: string): string | null {
   const input = userInput.toLowerCase();
   
-  // Industry-specific questions
-  if (input.includes('education') || input.includes('school') || input.includes('public') || input.includes('university') || input.includes('college')) {
-    const example = PRIMACY_KNOWLEDGE.industryExperience.education[Math.floor(Math.random() * PRIMACY_KNOWLEDGE.industryExperience.education.length)];
-    return `Absolutely! We have extensive experience in the education sector. ${example} What specific challenges is your institution facing with digital outreach or communication?`;
+  // Industry-specific questions - Educational institutions
+  if (input.includes('education') || input.includes('school') || input.includes('university') || input.includes('college') || 
+      input.includes('educational institution') || input.includes('higher ed')) {
+    const suffolk = PRIMACY_KNOWLEDGE.industryExperience.suffolkUniversity;
+    return `Yes! We've done a lot of incredible award-winning work with educational institutions. One standout project is Suffolk University. We redesigned their entire website to differentiate them in Boston's competitive higher-ed market. The results were remarkable: ${suffolk.results[0]}, ${suffolk.results[1]}, and ${suffolk.results[2]}. We unified multiple school sites into one cohesive ecosystem and created interactive tools like a Program Finder and student narrative hub. Would you like to schedule time with someone on Primacy's Client Service team to have a conversation about your business?`;
   }
   
   if (input.includes('healthcare') || input.includes('medical') || input.includes('hospital') || input.includes('clinic')) {
@@ -251,6 +287,20 @@ function generateServiceInfo(userInput: string): string {
     }
   }
   return "Our comprehensive approach includes strategy development, implementation, and ongoing optimization across all digital channels to deliver measurable results.";
+}
+
+function generateScheduleOptions(userData: any): string {
+  const today = new Date();
+  const options: string[] = [];
+  
+  for (let i = 1; i <= 3; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    options.push(`${dayName} at 10:00 AM EST or 2:00 PM EST`);
+  }
+  
+  return `Perfect, ${userData.scheduleFirstName}! Thank you for providing your information. Here are some available times for an initial call over the next 3 days:\n\n${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}\n\nWhich time works best for you? Our team will send a calendar invite to ${userData.scheduleEmail} once you confirm.`;
 }
 
 function generateGenericResponse(userInput: string): string {

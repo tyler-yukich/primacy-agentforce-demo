@@ -19,6 +19,10 @@ interface UserData {
   email?: string;
   company?: string;
   industry?: string;
+  scheduleFirstName?: string;
+  scheduleLastName?: string;
+  scheduleEmail?: string;
+  scheduleCompany?: string;
 }
 
 interface AgentforceChatProps {
@@ -33,7 +37,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [userData, setUserData] = useState<UserData>({});
-  const [currentStep, setCurrentStep] = useState<'greeting' | 'discovery' | 'exploration' | 'needs_assessment' | 'firstName' | 'lastName' | 'email' | 'company' | 'industry' | 'complete'>('greeting');
+  const [currentStep, setCurrentStep] = useState<'greeting' | 'discovery' | 'exploration' | 'needs_assessment' | 'firstName' | 'lastName' | 'email' | 'company' | 'industry' | 'complete' | 'schedule_request' | 'schedule_firstName' | 'schedule_lastName' | 'schedule_email' | 'schedule_company' | 'schedule_complete'>('greeting');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -84,7 +88,12 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
         industry: 'complete'
       };
       
-      setCurrentStep(stepSequence[currentStep] as any);
+      // Special case: if greeting response mentions Suffolk/schedule, go to schedule_request
+      if (currentStep === 'greeting' && (responseText.includes('Suffolk University') || responseText.includes('schedule time'))) {
+        setCurrentStep('schedule_request');
+      } else {
+        setCurrentStep(stepSequence[currentStep] as any);
+      }
     } catch (error) {
       setIsTyping(false);
       toast.error("Sorry, I'm having trouble responding right now. Please try again.");
@@ -115,6 +124,14 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
       newUserData.company = userMessage;
     } else if (currentStep === 'industry') {
       newUserData.industry = userMessage;
+    } else if (currentStep === 'schedule_firstName') {
+      newUserData.scheduleFirstName = userMessage;
+    } else if (currentStep === 'schedule_lastName') {
+      newUserData.scheduleLastName = userMessage;
+    } else if (currentStep === 'schedule_email') {
+      newUserData.scheduleEmail = userMessage;
+    } else if (currentStep === 'schedule_company') {
+      newUserData.scheduleCompany = userMessage;
     }
     // For conversational steps, we don't store specific data but keep the conversation context
     setUserData(newUserData);
@@ -149,7 +166,12 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
         lastName: 'email',
         email: 'company',
         company: 'industry',
-        industry: 'complete'
+        industry: 'complete',
+        schedule_request: userMessage.toLowerCase().includes('yes') ? 'schedule_firstName' : 'complete',
+        schedule_firstName: 'schedule_lastName',
+        schedule_lastName: 'schedule_email',
+        schedule_email: 'schedule_company',
+        schedule_company: 'schedule_complete'
       };
       
       const nextStep = stepSequence[currentStep];
@@ -159,6 +181,10 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
 
       if (currentStep === 'industry') {
         toast.success("Lead captured successfully! Our team will be in touch soon.");
+      }
+      
+      if (currentStep === 'schedule_company') {
+        toast.success("Meeting scheduled! You'll receive a calendar invite shortly.");
       }
     } catch (error) {
       setIsTyping(false);
@@ -212,7 +238,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
         </div>
 
         {/* Input */}
-        {currentStep !== 'complete' && (
+        {currentStep !== 'complete' && currentStep !== 'schedule_complete' && (
           <div className="p-4 border-t border-chat-border">
             <div className="flex gap-2">
               <Input
