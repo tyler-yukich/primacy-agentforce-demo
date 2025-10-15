@@ -35,7 +35,7 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
             </div>
           </div>
         ) : (
-          <p className="text-sm leading-relaxed">{message}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-line">{message}</p>
         )}
       </div>
       
