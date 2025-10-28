@@ -51,7 +51,7 @@ const AgentforceChat = ({
       handleSendMessage();
     }
   };
-  return <div className="flex flex-col h-auto md:flex-1 md:h-full">
+  return <div className="flex flex-col h-auto md:flex-1 md:h-full w-full">
       <div className="w-full max-w-screen-xl mx-auto flex flex-col h-auto md:h-full bg-background">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-chat-border bg-background">
