@@ -4,7 +4,7 @@ import primacyLogo from "@/assets/primacy_horizontal.svg";
 const Header = () => {
   return <header className="bg-primary text-primary-foreground">
       {/* Top Navigation Bar */}
-      <div className="px-6 md:px-12 lg:px-16 xl:px-20 2xl:px-24 py-4">
+      <div className="px-6 md:px-12 lg:px-16 xl:px-20 2xl:px-24 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <img src={primacyLogo} alt="Primacy" className="h-6 md:h-8" />
           <div className="flex items-center gap-4">
