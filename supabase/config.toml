@@ -1,1 +1,4 @@
 project_id = "cnhusggfsjvcgnqxevdl"
+
+[functions.agentforce-proxy]
+verify_jwt = false

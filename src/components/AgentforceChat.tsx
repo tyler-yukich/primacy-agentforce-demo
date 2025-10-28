@@ -1,29 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, X } from "lucide-react";
 import ChatMessage from "./ChatMessage";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { generateAgentResponse } from "@/lib/openai";
-
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-}
-
-interface UserData {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  company?: string;
-  industry?: string;
-  scheduleFirstName?: string;
-  scheduleLastName?: string;
-  scheduleEmail?: string;
-  scheduleCompany?: string;
-}
+import { useAgentforce } from "@/hooks/useAgentforce";
 
 interface AgentforceChatProps {
   initialMessage: string;
@@ -31,16 +11,9 @@ interface AgentforceChatProps {
 }
 
 const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: initialMessage, isUser: true }
-  ]);
   const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [userData, setUserData] = useState<UserData>({});
-  const [currentStep, setCurrentStep] = useState<'greeting' | 'discovery' | 'exploration' | 'needs_assessment' | 'firstName' | 'lastName' | 'email' | 'company' | 'industry' | 'complete' | 'schedule_request' | 'schedule_firstName' | 'schedule_lastName' | 'schedule_email' | 'schedule_company' | 'schedule_complete'>('greeting');
-  
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { messages, sendMessage, isLoading, error } = useAgentforce();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,150 +23,23 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
     scrollToBottom();
   }, [messages]);
 
+  // Send initial message when chat opens
   useEffect(() => {
-    // Initial greeting
-    handleAgentResponse();
-  }, []);
-
-  const handleAgentResponse = async () => {
-    setIsTyping(true);
-    
-    // Simulate typing delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    try {
-      const responseText = await generateAgentResponse({
-        message: initialMessage,
-        step: currentStep,
-        userData: userData
-      });
-
-      setIsTyping(false);
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        text: responseText,
-        isUser: false
-      }]);
-      
-      // Advance to next step with enhanced conversational flow
-      const stepSequence: Record<string, string> = {
-        greeting: 'discovery',
-        discovery: 'exploration', 
-        exploration: 'needs_assessment',
-        needs_assessment: 'firstName',
-        firstName: 'lastName',
-        lastName: 'email',
-        email: 'company',
-        company: 'industry',
-        industry: 'complete'
-      };
-      
-      // Special case: if greeting response mentions Suffolk/schedule, go to schedule_request
-      if (currentStep === 'greeting' && (responseText.includes('Suffolk University') || responseText.includes('schedule time'))) {
-        setCurrentStep('schedule_request');
-      } else {
-        setCurrentStep(stepSequence[currentStep] as any);
-      }
-    } catch (error) {
-      setIsTyping(false);
-      toast.error("Sorry, I'm having trouble responding right now. Please try again.");
+    if (initialMessage && messages.length === 0 && !isLoading) {
+      sendMessage(initialMessage);
     }
-  };
+  }, [initialMessage]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
 
-    const userMessage = inputValue.trim();
-    
-    // Add user message
-    setMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      text: userMessage,
-      isUser: true
-    }]);
-
-    // Update user data based on current step
-    const newUserData = { ...userData };
-    if (currentStep === 'firstName') {
-      newUserData.firstName = userMessage;
-    } else if (currentStep === 'lastName') {
-      newUserData.lastName = userMessage;
-    } else if (currentStep === 'email') {
-      newUserData.email = userMessage;
-    } else if (currentStep === 'company') {
-      newUserData.company = userMessage;
-    } else if (currentStep === 'industry') {
-      newUserData.industry = userMessage;
-    } else if (currentStep === 'schedule_firstName') {
-      newUserData.scheduleFirstName = userMessage;
-    } else if (currentStep === 'schedule_lastName') {
-      newUserData.scheduleLastName = userMessage;
-    } else if (currentStep === 'schedule_email') {
-      newUserData.scheduleEmail = userMessage;
-    } else if (currentStep === 'schedule_company') {
-      newUserData.scheduleCompany = userMessage;
-    }
-    // For conversational steps, we don't store specific data but keep the conversation context
-    setUserData(newUserData);
-
+    const messageToSend = inputValue;
     setInputValue("");
-
-    // Generate agent response
-    setIsTyping(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    try {
-      const responseText = await generateAgentResponse({
-        message: userMessage,
-        step: currentStep,
-        userData: newUserData
-      });
-
-      setIsTyping(false);
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        text: responseText,
-        isUser: false
-      }]);
-      
-      // Advance to next step with enhanced conversational flow
-      const stepSequence: Record<string, string> = {
-        discovery: 'exploration',
-        exploration: 'needs_assessment', 
-        needs_assessment: 'firstName',
-        firstName: 'lastName',
-        lastName: 'email',
-        email: 'company',
-        company: 'industry',
-        industry: 'complete',
-        schedule_request: userMessage.toLowerCase().includes('yes') ? 'schedule_firstName' : 'complete',
-        schedule_firstName: 'schedule_lastName',
-        schedule_lastName: 'schedule_email',
-        schedule_email: 'schedule_company',
-        schedule_company: 'schedule_complete'
-      };
-      
-      const nextStep = stepSequence[currentStep];
-      if (nextStep) {
-        setCurrentStep(nextStep as any);
-      }
-
-      if (currentStep === 'industry') {
-        toast.success("Lead captured successfully! Our team will be in touch soon.");
-      }
-      
-      if (currentStep === 'schedule_company') {
-        toast.success("Meeting scheduled! You'll receive a calendar invite shortly.");
-      }
-    } catch (error) {
-      setIsTyping(false);
-      toast.error("Sorry, I'm having trouble responding right now. Please try again.");
-    }
+    await sendMessage(messageToSend);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -210,7 +56,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Agentforce</h3>
-              <p className="text-xs text-muted-foreground">Primacy Assistant</p>
+              <p className="text-xs text-muted-foreground">Powered by Salesforce</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -227,40 +73,42 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
               isUser={message.isUser}
             />
           ))}
-          {isTyping && (
+          {isLoading && (
             <ChatMessage
               message=""
               isUser={false}
               isTyping={true}
             />
           )}
+          {error && (
+            <div className="text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+              {error}
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
-        {currentStep !== 'complete' && currentStep !== 'schedule_complete' && (
-          <div className="p-4 border-t border-chat-border">
-            <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your response..."
-                className="flex-1"
-                disabled={isTyping}
-              />
-              <Button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isTyping}
-                size="sm"
-                className="bg-primary hover:bg-primary-dark"
-              >
-                <Send size={16} />
-              </Button>
-            </div>
+        <div className="p-4 border-t border-chat-border">
+          <div className="flex gap-2">
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="flex-1"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading}
+              size="sm"
+              className="bg-primary hover:bg-primary-dark"
+            >
+              Send
+            </Button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
