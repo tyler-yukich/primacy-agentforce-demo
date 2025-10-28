@@ -204,6 +204,23 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
             const payload = t.slice(6);
             try {
               const parsed = JSON.parse(payload);
+              const eventType = parsed.type || parsed.message?.type;
+              
+              // Log event type for debugging
+              if (firstTenOut < 10) {
+                console.log('[stream] Event type:', eventType, 'hasMessage:', !!parsed.message);
+              }
+              
+              // Skip complete/done events to avoid duplication
+              if (eventType && (
+                eventType.toLowerCase().includes('complete') ||
+                eventType.toLowerCase().includes('done') ||
+                eventType.toLowerCase() === 'textresponsechunk'
+              )) {
+                console.log('[stream] Skipping complete message event:', eventType);
+                continue;
+              }
+              
               const m = parsed.message;
               const content = (m && (m.message || m.text || m.delta || m.content)) || parsed.content;
               
