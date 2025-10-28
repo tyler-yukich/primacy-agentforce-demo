@@ -8,7 +8,7 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <img src={primacyLogo} alt="Primacy" className="h-6 md:h-8" />
           <div className="flex items-center gap-4">
-            <Button variant="secondary" size="lg" className="bg-lime-400 text-black hover:bg-lime-300 rounded-full px-8 py-3 text-base font-medium shadow-lg">
+            <Button variant="secondary" size="lg" className="hidden md:flex bg-lime-400 text-black hover:bg-lime-300 rounded-full px-8 py-3 text-base font-medium shadow-lg">
               Contact Us
             </Button>
             <Menu className="h-11 w-11 text-primary-foreground" />
