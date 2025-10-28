@@ -22,6 +22,7 @@ const Footer = () => {
                 Looking for a results-driven partner?
               </p>
               <Button 
+                variant="static"
                 size="lg" 
                 className="bg-black text-white rounded-full px-8 py-4 text-base font-medium"
               >
