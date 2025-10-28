@@ -102,11 +102,23 @@ async function initializeSession(accessToken: string): Promise<{ sessionId: stri
   }
 
   const data = await response.json();
-  console.log('Session initialized:', data.id);
-  
+
+  // Log full response to debug (redact sensitive fields)
+  console.log('[session] Full Salesforce response keys:', Object.keys(data));
+
+  // Try multiple possible sessionId locations
+  const sessionId = data.sessionId || data.id || data?.session?.id || data?.sessionKey;
+
+  if (!sessionId) {
+    console.error('[session] ERROR: No session ID found in response:', JSON.stringify(data, null, 2));
+    throw new Error('Salesforce did not return a valid session ID');
+  }
+
+  console.log('[session] Initialized session ID:', sessionId);
+
   return {
-    sessionId: data.id,
-    streamUrl: data.links?.messagesStream || ''
+    sessionId,
+    streamUrl: data.links?.messagesStream || data.streamUrl || ''
   };
 }
 
@@ -189,14 +201,23 @@ async function sendMessageAndStream(
               try {
                 const parsed = JSON.parse(data);
                 
-                // Extract text from Salesforce TextChunk events
-                if (parsed.message?.type === 'TextChunk' && parsed.message?.message) {
-                  const content = parsed.message.message;
-                  console.log('Extracted text chunk:', content);
+                // Extract text from various Salesforce event types
+                const message = parsed.message;
+                const content = 
+                  message?.message ||      // TextChunk
+                  message?.text ||         // TextResponseChunk
+                  message?.delta ||        // TextDelta
+                  message?.content ||      // Generic content
+                  parsed.content;          // Direct content
+
+                if (content && typeof content === 'string') {
+                  console.log('[stream] Received chunk length:', content.length);
                   
                   // Send transformed event to frontend
                   const transformedEvent = `data: ${JSON.stringify({ content })}\n\n`;
                   controller.enqueue(new TextEncoder().encode(transformedEvent));
+                } else if (message?.type) {
+                  console.log('[stream] Non-text chunk type:', message.type);
                 }
               } catch (e) {
                 console.warn('Failed to parse Salesforce SSE data:', data);

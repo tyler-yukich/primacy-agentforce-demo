@@ -9,13 +9,15 @@ interface Message {
 interface UseAgentforceReturn {
   messages: Message[];
   sendMessage: (text: string) => Promise<void>;
-  isLoading: boolean;
+  sessionId: string | null;
+  isInitializing: boolean;
+  isStreaming: boolean;
   error: string | null;
 }
 
 export function useAgentforce(): UseAgentforceReturn {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -43,7 +45,13 @@ export function useAgentforce(): UseAgentforceReturn {
         }
 
         const data = await response.json();
-        console.log('Session initialized:', data.sessionId);
+        console.log('[hook] Session init response:', data);
+
+        if (!data.sessionId) {
+          throw new Error('No session ID received from server');
+        }
+
+        console.log('[hook] Session ID received:', data.sessionId);
         setSessionId(data.sessionId);
         setIsInitializing(false);
       } catch (err) {
@@ -72,7 +80,7 @@ export function useAgentforce(): UseAgentforceReturn {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
+    setIsStreaming(true);
     setError(null);
 
     try {
@@ -169,10 +177,11 @@ export function useAgentforce(): UseAgentforceReturn {
 
       // If no text was received, show a fallback message
       if (!assistantText) {
+        console.warn('[hook] Stream completed but no content received');
         setMessages(prev => 
           prev.map(msg => 
             msg.id === assistantMessageId 
-              ? { ...msg, text: 'I received your message. How can I help you further?' }
+              ? { ...msg, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?" }
               : msg
           )
         );
@@ -185,14 +194,16 @@ export function useAgentforce(): UseAgentforceReturn {
       // Remove the user message on error
       setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
     } finally {
-      setIsLoading(false);
+      setIsStreaming(false);
     }
   };
 
   return {
     messages,
     sendMessage,
-    isLoading: isLoading || isInitializing,
+    sessionId,
+    isInitializing,
+    isStreaming,
     error,
   };
 }

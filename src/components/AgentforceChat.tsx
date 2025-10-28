@@ -13,7 +13,7 @@ interface AgentforceChatProps {
 const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { messages, sendMessage, isLoading, error } = useAgentforce();
+  const { messages, sendMessage, sessionId, isInitializing, isStreaming, error } = useAgentforce();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -23,15 +23,16 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
     scrollToBottom();
   }, [messages]);
 
-  // Send initial message when chat opens
+  // Send initial message when session is ready
   useEffect(() => {
-    if (initialMessage && messages.length === 0 && !isLoading) {
+    if (sessionId && !isInitializing && !isStreaming && messages.length === 0 && initialMessage) {
+      console.log('[chat] Sending initial message:', initialMessage);
       sendMessage(initialMessage);
     }
-  }, [initialMessage]);
+  }, [sessionId, isInitializing, isStreaming]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isStreaming) return;
 
     const messageToSend = inputValue;
     setInputValue("");
@@ -73,7 +74,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
               isUser={message.isUser}
             />
           ))}
-          {isLoading && (
+          {isStreaming && (
             <ChatMessage
               message=""
               isUser={false}
@@ -97,11 +98,11 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
               className="flex-1"
-              disabled={isLoading}
+              disabled={isStreaming}
             />
             <Button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isStreaming}
               size="sm"
               className="bg-primary hover:bg-primary-dark"
             >
