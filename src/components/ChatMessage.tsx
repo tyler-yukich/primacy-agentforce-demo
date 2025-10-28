@@ -41,8 +41,8 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
       </div>
       
       {isUser && (
-        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-          <User size={16} className="text-muted-foreground" />
+        <div className="w-8 h-8 rounded-full bg-chat-agent-avatar flex items-center justify-center flex-shrink-0">
+          <User size={16} className="text-white" />
         </div>
       )}
     </div>
