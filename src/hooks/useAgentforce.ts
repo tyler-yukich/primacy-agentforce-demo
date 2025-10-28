@@ -155,19 +155,29 @@ export function useAgentforce(): UseAgentforceReturn {
               const parsed = JSON.parse(data);
               
               // Edge function transforms Salesforce events to simple format
-              const content = parsed.content || '';
+              const content = parsed.content;
 
               if (content) {
                 console.log('Received content:', content);
-                assistantText += content;
                 
-                // Update the assistant message
                 setMessages(prev => 
-                  prev.map(msg => 
-                    msg.id === assistantMessageId 
-                      ? { ...msg, text: assistantText }
-                      : msg
-                  )
+                  prev.map(msg => {
+                    if (msg.id !== assistantMessageId) return msg;
+                    
+                    const currentText = msg.text || '';
+                    const newContent = String(content);
+                    
+                    // If incoming content starts with current text, it's an aggregate - replace
+                    if (newContent.startsWith(currentText) && newContent.length > currentText.length) {
+                      console.log('[dedup] Detected aggregate, replacing');
+                      assistantText = newContent;
+                      return { ...msg, text: newContent };
+                    }
+                    
+                    // Otherwise, append as delta
+                    assistantText = currentText + newContent;
+                    return { ...msg, text: assistantText };
+                  })
                 );
               }
             } catch (e) {

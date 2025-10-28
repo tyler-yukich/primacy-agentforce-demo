@@ -188,6 +188,7 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
 
   return new Response(new ReadableStream({
     async start(controller) {
+      let accumulated = ''; // Track aggregated content for fallback deduplication
       try {
         let buf = '';
         for (;;) {
@@ -203,33 +204,57 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
             
             const payload = t.slice(6);
             try {
-              const parsed = JSON.parse(payload);
-              const eventType = parsed.type || parsed.message?.type;
+              const evt = JSON.parse(payload);
+              const m = evt.message;
+              const type = m?.type;  // Nested under message, not at root
               
-              // Log event type for debugging
-              if (firstTenOut < 10) {
-                console.log('[stream] Event type:', eventType, 'hasMessage:', !!parsed.message);
-              }
+              let content = 
+                m?.message ??    // TextChunk field
+                m?.delta   ??    // TextDelta field
+                m?.text    ??    // fallback
+                evt.content ?? '';
               
-              // Skip complete/done events to avoid duplication
-              if (eventType && (
-                eventType.toLowerCase().includes('complete') ||
-                eventType.toLowerCase().includes('done') ||
-                eventType.toLowerCase() === 'textresponsechunk'
-              )) {
-                console.log('[stream] Skipping complete message event:', eventType);
-                continue;
-              }
+              if (typeof content !== 'string' || !content) continue;
               
-              const m = parsed.message;
-              const content = (m && (m.message || m.text || m.delta || m.content)) || parsed.content;
-              
-              if (typeof content === 'string' && content.length) {
+              // Strategy 1: Use explicit type when present
+              if (type) {
                 if (firstTenOut < 10) {
-                  console.log('[stream] Received chunk of length:', content.length);
-                  firstTenOut++;
+                  console.log('[stream] Event type:', type, 'length:', content.length);
                 }
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                
+                // Only forward incremental chunk types
+                if (type === 'TextChunk' || type === 'TextDelta') {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                  if (firstTenOut < 10) firstTenOut++;
+                } else {
+                  console.log('[stream] Skipping aggregate type:', type);
+                }
+              } else {
+                // Strategy 2: Fallback when type is undefined
+                // Use accumulator to detect aggregates
+                if (content.startsWith(accumulated)) {
+                  // This looks like an aggregate containing what we've already sent
+                  const delta = content.slice(accumulated.length);
+                  
+                  if (firstTenOut < 10) {
+                    console.log('[stream] Detected aggregate, delta length:', delta.length);
+                  }
+                  
+                  if (delta) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`));
+                    if (firstTenOut < 10) firstTenOut++;
+                  }
+                  accumulated = content;
+                } else {
+                  // Fresh content, forward as-is
+                  if (firstTenOut < 10) {
+                    console.log('[stream] Fresh content, length:', content.length);
+                  }
+                  
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                  accumulated += content;
+                  if (firstTenOut < 10) firstTenOut++;
+                }
               }
             } catch {}
           }
