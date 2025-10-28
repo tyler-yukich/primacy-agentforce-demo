@@ -36,7 +36,7 @@ const PreEngagement = ({
             <Input 
               value={inputValue} 
               onChange={e => setInputValue(e.target.value)} 
-              placeholder="I'm an AI Agent that can answer your questions, or connect you with our Business Development team." 
+              placeholder="Ask me a question to learn more about Primacy and our client work!" 
               className="flex-1 w-full h-16 text-xl pr-16" 
             />
             <button
