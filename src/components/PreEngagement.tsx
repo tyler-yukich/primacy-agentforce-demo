@@ -32,9 +32,21 @@ const PreEngagement = ({
         </div>
 
         <form onSubmit={handleSubmit} className="w-full mx-auto px-8 mt-12">
-          <div className="flex w-full gap-3">
-            <Input value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Type your question or tell us what you need help with..." className="flex-1 min-w-0 h-16 text-xl" />
-            <Button type="submit" size="lg" disabled={!inputValue.trim()} className="bg-chat-agent-avatar h-16 px-8 text-2xl text-white">↑</Button>
+          <div className="relative w-full">
+            <Input 
+              value={inputValue} 
+              onChange={e => setInputValue(e.target.value)} 
+              placeholder="Type your question or tell us what you need help with..." 
+              className="flex-1 w-full h-16 text-xl pr-16" 
+            />
+            <button
+              type="submit"
+              disabled={!inputValue.trim()}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-chat-agent-avatar text-white flex items-center justify-center text-2xl disabled:opacity-50 hover:opacity-90 transition-opacity"
+              aria-label="Submit message"
+            >
+              ↑
+            </button>
           </div>
         </form>
 
