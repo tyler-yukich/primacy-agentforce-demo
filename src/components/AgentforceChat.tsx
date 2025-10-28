@@ -61,7 +61,7 @@ const AgentforceChat = ({
             </div>
             <div>
               <h3 className="font-semibold text-foreground">PRIMACY_agent</h3>
-              <p className="text-xs text-muted-foreground">Powered by Salesforce</p>
+              <p className="text-xs text-muted-foreground">Powered by Agentforce</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
