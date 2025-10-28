@@ -156,11 +156,10 @@ export function useAgentforce(): UseAgentforceReturn {
               
               // Edge function transforms Salesforce events to simple format
               const content = parsed.content;
-
-              if (content) {
-                console.log('Received content:', content);
-                
-                setMessages(prev => 
+          
+          if (content) {
+            
+            setMessages(prev =>
                   prev.map(msg => {
                     if (msg.id !== assistantMessageId) return msg;
                     

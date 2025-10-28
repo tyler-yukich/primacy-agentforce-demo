@@ -39,6 +39,13 @@ const SF_CONFIG = {
 // Per-session sequence counter (best-effort in-memory)
 const sequenceBySession = new Map<string, number>();
 
+// Metrics counters (per-instance; Deno edge can scale out)
+const metrics = {
+  init_success: 0,
+  stream_error: 0,
+  no_session_id: 0
+};
+
 async function getAccessToken(): Promise<string> {
   // Check if we have a valid cached token
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
@@ -74,7 +81,7 @@ async function refreshAccessToken(): Promise<string> {
   });
 
   const bodyText = await response.text();
-  console.log('[oauth] status', response.status, 'body[0..500]=', bodyText.slice(0, 500));
+  console.log('[oauth] status', response.status);
 
   if (!response.ok) {
     throw new Error('Failed to obtain Salesforce access token');
@@ -82,8 +89,6 @@ async function refreshAccessToken(): Promise<string> {
 
   const data = JSON.parse(bodyText);
   const token = data.access_token;
-  const scope = data.scope || 'N/A';
-  const issuedAt = data.issued_at || 'N/A';
   
   // Cache token for 90 minutes
   cachedToken = {
@@ -91,7 +96,9 @@ async function refreshAccessToken(): Promise<string> {
     expiresAt: Date.now() + (90 * 60 * 1000),
   };
 
-  console.log('[oauth] Successfully obtained new Salesforce token; scope:', scope, 'issued_at:', issuedAt);
+  metrics.init_success++;
+  console.log('[oauth] Token obtained');
+  console.log('[metrics]', JSON.stringify(metrics));
   return token;
 }
 
@@ -136,14 +143,16 @@ async function initSession(accessToken: string) {
   const sessionId = data.sessionId || data.id || data?.session?.id || data?.sessionKey;
   const endUrl = data?._links?.end?.href || data?.links?.end?.href || null;
   
-  console.log('[session] keys', Object.keys(data));
-  console.log('[session] Initialized session ID:', sessionId, 'endUrl:', endUrl);
+  console.log('[session] sessionId:', sessionId);
   
   if (!sessionId) {
+    metrics.no_session_id++;
+    console.log('[metrics]', JSON.stringify(metrics));
     return err(502, 'No sessionId from Salesforce', data);
   }
 
   sequenceBySession.set(sessionId, 1);
+  console.log('[metrics]', JSON.stringify(metrics));
   return ok({ sessionId, endUrl });
 }
 
@@ -173,6 +182,8 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
   console.log('[stream] status', resp.status);
 
   if (!resp.ok) {
+    metrics.stream_error++;
+    console.log('[metrics]', JSON.stringify(metrics));
     const upstream = await resp.text();
     return err(resp.status, 'Failed to send message to Agentforce', upstream.slice(0, 500));
   }
@@ -184,7 +195,7 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
-  let firstTenOut = 0;
+  console.log('[stream] start seq=', nextSeq);
 
   return new Response(new ReadableStream({
     async start(controller) {
@@ -218,16 +229,9 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
               
               // Strategy 1: Use explicit type when present
               if (type) {
-                if (firstTenOut < 10) {
-                  console.log('[stream] Event type:', type, 'length:', content.length);
-                }
-                
                 // Only forward incremental chunk types
                 if (type === 'TextChunk' || type === 'TextDelta') {
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
-                  if (firstTenOut < 10) firstTenOut++;
-                } else {
-                  console.log('[stream] Skipping aggregate type:', type);
                 }
               } else {
                 // Strategy 2: Fallback when type is undefined
@@ -236,31 +240,21 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
                   // This looks like an aggregate containing what we've already sent
                   const delta = content.slice(accumulated.length);
                   
-                  if (firstTenOut < 10) {
-                    console.log('[stream] Detected aggregate, delta length:', delta.length);
-                  }
-                  
                   if (delta) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: delta })}\n\n`));
-                    if (firstTenOut < 10) firstTenOut++;
                   }
                   accumulated = content;
                 } else {
                   // Fresh content, forward as-is
-                  if (firstTenOut < 10) {
-                    console.log('[stream] Fresh content, length:', content.length);
-                  }
-                  
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   accumulated += content;
-                  if (firstTenOut < 10) firstTenOut++;
                 }
               }
             } catch {}
           }
         }
         // Emit DONE sentinel for client finalization
-        console.log('[stream] Emitting [DONE] sentinel');
+        console.log('[stream] done');
         controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
         controller.close();
       } catch (e) {
