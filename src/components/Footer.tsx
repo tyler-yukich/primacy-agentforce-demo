@@ -69,6 +69,34 @@ const Footer = () => {
           </div>
         </div>
       </div>
+      
+      {/* Agency Logos Section */}
+      <div className="bg-white py-8 px-6">
+        <div className="container mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            {/* Logo Placeholders */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gray-800 flex items-center justify-center text-white font-bold text-sm">
+                DU
+              </div>
+              <div className="w-16 h-16 bg-primary flex items-center justify-center text-white font-bold text-sm">
+                P
+              </div>
+              <div className="w-16 h-16 bg-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                M.
+              </div>
+              <div className="w-16 h-16 bg-cyan-500 flex items-center justify-center text-white font-bold text-sm">
+                /Z
+              </div>
+            </div>
+            
+            {/* Copyright Text */}
+            <p className="text-sm text-gray-600">
+              © 2025 Digital United LLC All Rights Reserved. Privacy Policy
+            </p>
+          </div>
+        </div>
+      </div>
     </footer>
   );
 };
