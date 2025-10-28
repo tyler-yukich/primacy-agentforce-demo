@@ -5,21 +5,29 @@ import { Input } from "@/components/ui/input";
 import ChatMessage from "./ChatMessage";
 import { useAgentforce } from "@/hooks/useAgentforce";
 import agentforceLogo from "@/assets/agentforce-logo.svg";
-
 interface AgentforceChatProps {
   initialMessage: string;
   onClose: () => void;
 }
-
-const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
+const AgentforceChat = ({
+  initialMessage,
+  onClose
+}: AgentforceChatProps) => {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { messages, sendMessage, sessionId, isInitializing, isStreaming, error } = useAgentforce();
-
+  const {
+    messages,
+    sendMessage,
+    sessionId,
+    isInitializing,
+    isStreaming,
+    error
+  } = useAgentforce();
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth"
+    });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -31,24 +39,19 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
       sendMessage(initialMessage);
     }
   }, [sessionId, isInitializing, isStreaming]);
-
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isStreaming) return;
-
     const messageToSend = inputValue;
     setInputValue("");
     await sendMessage(messageToSend);
   };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-
-  return (
-    <div className="flex-1 h-full flex flex-col">
+  return <div className="flex-1 h-full flex flex-col">
       <div className="w-full max-w-screen-xl mx-auto flex flex-col h-full bg-background">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-chat-border bg-background">
@@ -57,7 +60,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
               <img src={agentforceLogo} alt="Agentforce" className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Agentforce</h3>
+              <h3 className="font-semibold text-foreground">PRIMACY_agent</h3>
               <p className="text-xs text-muted-foreground">Powered by Salesforce</p>
             </div>
           </div>
@@ -68,56 +71,28 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
 
         {/* Messages */}
         <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background">
-          {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              message={message.text}
-              isUser={message.isUser}
-            />
-          ))}
+          {messages.map(message => <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />)}
           {(() => {
-            const lastAssistantMessage = messages.filter(m => !m.isUser).pop();
-            const showTyping = isStreaming && (!lastAssistantMessage || lastAssistantMessage.text.length === 0);
-            return showTyping && (
-              <ChatMessage
-                message=""
-                isUser={false}
-                isTyping={true}
-              />
-            );
-          })()}
-          {error && (
-            <div className="text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+          const lastAssistantMessage = messages.filter(m => !m.isUser).pop();
+          const showTyping = isStreaming && (!lastAssistantMessage || lastAssistantMessage.text.length === 0);
+          return showTyping && <ChatMessage message="" isUser={false} isTyping={true} />;
+        })()}
+          {error && <div className="text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg">
               {error}
-            </div>
-          )}
+            </div>}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
         <div className="p-4 border-t border-chat-border">
           <div className="flex gap-2">
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1"
-              disabled={isStreaming}
-            />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isStreaming}
-              size="sm"
-              className="bg-primary hover:bg-primary-dark"
-            >
+            <Input value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..." className="flex-1" disabled={isStreaming} />
+            <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isStreaming} size="sm" className="bg-primary hover:bg-primary-dark">
               Send
             </Button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default AgentforceChat;
