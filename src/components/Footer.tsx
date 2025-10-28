@@ -7,7 +7,7 @@ const Footer = () => {
       <footer className="bg-primary py-10 md:py-12 lg:py-16 px-6 mt-auto text-white">
         <div className="container mx-auto">
           {/* Main footer content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 lg:gap-20 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 lg:gap-20">
             {/* Left section - Logo, tagline, and CTA */}
             <div>
               <img src={primacyLogo} alt="Primacy" className="h-14 mb-8" />
@@ -49,15 +49,6 @@ const Footer = () => {
                   </ul>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          {/* Bottom section - Copyright */}
-          <div className="border-t border-primary-foreground/20 pt-8">
-            <div className="flex justify-end items-center">
-              <p className="text-xs text-white">
-                © 2024 Primacy. All rights reserved.
-              </p>
             </div>
           </div>
         </div>
