@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Bot, User } from "lucide-react";
+import { User } from "lucide-react";
+import agentforceLogo from "@/assets/agentforce-logo.svg";
 
 interface ChatMessageProps {
   message: string;
@@ -15,7 +16,7 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
     )}>
       {!isUser && (
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-          <Bot size={16} className="text-primary-foreground" />
+          <img src={agentforceLogo} alt="Agentforce" className="w-5 h-5" />
         </div>
       )}
       

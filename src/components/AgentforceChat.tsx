@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ChatMessage from "./ChatMessage";
 import { useAgentforce } from "@/hooks/useAgentforce";
+import agentforceLogo from "@/assets/agentforce-logo.svg";
 
 interface AgentforceChatProps {
   initialMessage: string;
@@ -53,7 +54,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
         <div className="flex items-center justify-between p-4 border-b border-chat-border bg-background">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-semibold text-sm">A</span>
+              <img src={agentforceLogo} alt="Agentforce" className="w-6 h-6" />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Agentforce</h3>
