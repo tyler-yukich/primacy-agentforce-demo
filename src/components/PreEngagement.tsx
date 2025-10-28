@@ -15,15 +15,15 @@ const PreEngagement = ({
       onStartChat(inputValue.trim());
     }
   };
-  return <div className="flex-1 flex items-center justify-center py-32 px-6">
-      <div className="text-center w-full max-w-screen-xl mx-auto mt-[100px]">
+  return <div className="flex-1 flex items-center justify-center py-8 px-6 max-h-full overflow-auto">
+      <div className="text-center w-full max-w-screen-xl mx-auto">
         <div className="mb-10">
           
           
           <p className="text-muted-foreground max-w-lg mx-auto text-4xl">How can we help?</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full mx-auto px-8 mb-32">
+        <form onSubmit={handleSubmit} className="w-full mx-auto px-8">
           <div className="flex w-full gap-3">
             <Input value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Type your question or tell us what you need help with..." className="flex-1 min-w-0 h-16 text-xl" />
             <Button type="submit" size="lg" disabled={!inputValue.trim()} className="bg-primary hover:bg-primary-dark h-16 px-8 text-2xl">↑</Button>
