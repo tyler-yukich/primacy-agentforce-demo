@@ -147,8 +147,8 @@ export function useAgentforce(): UseAgentforceReturn {
             
             // Check for done signal
             if (data === '[DONE]') {
-              console.log('Received [DONE] signal');
-              continue;
+              console.log('Received [DONE] signal - finalizing stream');
+              break; // Stop reading immediately
             }
 
             try {

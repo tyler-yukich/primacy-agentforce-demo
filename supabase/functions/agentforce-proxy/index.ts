@@ -36,6 +36,9 @@ const SF_CONFIG = {
   }
 };
 
+// Per-session sequence counter (best-effort in-memory)
+const sequenceBySession = new Map<string, number>();
+
 async function getAccessToken(): Promise<string> {
   // Check if we have a valid cached token
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
@@ -93,55 +96,65 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 async function initSession(accessToken: string) {
-  const sessionKey = `lovable-session-${crypto.randomUUID()}`;
+  const externalSessionKey = `lovable-session-${crypto.randomUUID()}`;
   
   const url = `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/agents/${SF_CONFIG.AGENT_ID}/sessions`;
   console.log('[session] POST', url);
   
-  const response = await fetch(url, {
+  const resp = await fetch(url, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      externalSessionKey: sessionKey,
+      externalSessionKey,
       instanceConfig: {
         endpoint: SF_CONFIG.DOMAIN
       },
       streamingCapabilities: {
-        chunkTypes: ["Text"]
+        chunkTypes: ['Text']
       },
       bypassUser: true
     }),
   });
 
-  const bodyText = await response.text();
-  console.log('[session] status', response.status, 'body[0..500]=', bodyText.slice(0, 500));
+  const raw = await resp.text();
+  console.log('[session] status', resp.status, 'body[0..500]=', raw.slice(0, 500));
 
-  if (!response.ok) {
-    throw new Error('Failed to initialize Agentforce session');
+  if (!resp.ok) {
+    return err(resp.status, 'Failed to initialize Agentforce session', raw.slice(0, 500));
   }
 
-  const data = JSON.parse(bodyText);
-  console.log('[session] keys', Object.keys(data));
-  
+  let data: any = {};
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    return err(502, 'Failed to parse session response', raw.slice(0, 500));
+  }
+
   const sessionId = data.sessionId || data.id || data?.session?.id || data?.sessionKey;
+  const endUrl = data?._links?.end?.href || data?.links?.end?.href || null;
+  
+  console.log('[session] keys', Object.keys(data));
+  console.log('[session] Initialized session ID:', sessionId, 'endUrl:', endUrl);
   
   if (!sessionId) {
-    console.error('[session] No sessionId found in response');
-    throw new Error('No sessionId from Salesforce');
+    return err(502, 'No sessionId from Salesforce', data);
   }
 
-  console.log('[session] Initialized session ID:', sessionId);
-  return { sessionId };
+  sequenceBySession.set(sessionId, 1);
+  return ok({ sessionId, endUrl });
 }
 
 async function streamMessage(accessToken: string, sessionId: string, text: string) {
+  const nextSeq = (sequenceBySession.get(sessionId) ?? 0) + 1;
+  sequenceBySession.set(sessionId, nextSeq);
+
   const url = `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/sessions/${sessionId}/messages/stream`;
-  console.log('[stream] POST', url);
+  console.log('[stream] POST', url, 'sequenceId:', nextSeq);
   
-  const response = await fetch(url, {
+  const resp = await fetch(url, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -150,75 +163,101 @@ async function streamMessage(accessToken: string, sessionId: string, text: strin
     },
     body: JSON.stringify({
       message: {
-        sequenceId: 1,
+        sequenceId: nextSeq,
         type: 'Text',
         text
       }
     })
   });
 
-  console.log('[stream] status', response.status);
+  console.log('[stream] status', resp.status);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[stream] Failed:', errorText.slice(0, 500));
-    throw new Error('Failed to send message to Agentforce');
+  if (!resp.ok) {
+    const upstream = await resp.text();
+    return err(resp.status, 'Failed to send message to Agentforce', upstream.slice(0, 500));
   }
 
-  if (!response.body) {
-    throw new Error('No response body available');
+  if (!resp.body) {
+    return err(502, 'No response body available');
   }
 
-  const reader = response.body.getReader();
+  const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
+  let firstTenOut = 0;
 
-  let chunkCount = 0;
-
-  return new ReadableStream({
+  return new Response(new ReadableStream({
     async start(controller) {
-      let buf = '';
       try {
+        let buf = '';
         for (;;) {
           const { done, value } = await reader.read();
-          if (done) {
-            console.log('[stream] Complete');
-            break;
-          }
+          if (done) break;
           buf += decoder.decode(value, { stream: true });
           const lines = buf.split('\n');
           buf = lines.pop() || '';
           
           for (const line of lines) {
             const t = line.trim();
-            if (!t || t.startsWith(':')) continue;
-            if (!t.startsWith('data: ')) continue;
+            if (!t || t.startsWith(':') || !t.startsWith('data: ')) continue;
             
             const payload = t.slice(6);
             try {
               const parsed = JSON.parse(payload);
               const m = parsed.message;
-              const content =
-                (m && (m.message || m.text || m.delta || m.content)) ||
-                parsed.content;
+              const content = (m && (m.message || m.text || m.delta || m.content)) || parsed.content;
               
               if (typeof content === 'string' && content.length) {
-                chunkCount++;
-                if (chunkCount <= 10) {
+                if (firstTenOut < 10) {
                   console.log('[stream] Received chunk of length:', content.length);
+                  firstTenOut++;
                 }
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
               }
             } catch {}
           }
         }
+        // Emit DONE sentinel for client finalization
+        console.log('[stream] Emitting [DONE] sentinel');
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
         controller.close();
       } catch (e) {
         console.error('[stream] Error:', e);
         controller.error(e);
       }
     }
+  }), {
+    headers: {
+      ...CORS,
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }
   });
+}
+
+async function endSession(accessToken: string, sessionId: string, endUrl?: string) {
+  const url = endUrl || `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/sessions/${sessionId}/end`;
+  console.log('[end] POST', url);
+  
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({})
+  });
+
+  const body = await resp.text();
+  console.log('[end] status', resp.status, 'body[0..500]=', body.slice(0, 500));
+
+  if (!resp.ok) {
+    return err(resp.status, 'Failed to end session', body.slice(0, 500));
+  }
+
+  sequenceBySession.delete(sessionId);
+  return ok({ ended: true });
 }
 
 serve(async (req) => {
@@ -242,53 +281,31 @@ serve(async (req) => {
     // Handle init action
     if (action === 'init') {
       console.log('[edge] Initializing new Agentforce session');
-      try {
-        const result = await initSession(accessToken);
-        return ok(result);
-      } catch (error) {
-        return err(502, 'Failed to initialize session', error);
-      }
+      return await initSession(accessToken);
     }
 
     // Handle message action
     if (action === 'message') {
-      const { sessionId, message } = await req.json();
+      const { sessionId, message } = await req.json().catch(() => ({}));
       
       if (!sessionId || !message) {
         return err(400, 'Missing sessionId or message');
       }
 
       console.log('[edge] Processing message request');
+      return await streamMessage(accessToken, sessionId, message);
+    }
+
+    // Handle end action
+    if (action === 'end') {
+      const { sessionId, endUrl } = await req.json().catch(() => ({}));
       
-      try {
-        const stream = await streamMessage(accessToken, sessionId, message);
-        
-        return new Response(stream, {
-          headers: {
-            ...CORS,
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-          }
-        });
-      } catch (error) {
-        // Token expired - retry once
-        if (error instanceof Error && error.message.includes('401')) {
-          console.log('[edge] Token expired, refreshing and retrying');
-          accessToken = await refreshAccessToken();
-          const stream = await streamMessage(accessToken, sessionId, message);
-          
-          return new Response(stream, {
-            headers: {
-              ...CORS,
-              'Content-Type': 'text/event-stream',
-              'Cache-Control': 'no-cache',
-              'Connection': 'keep-alive'
-            }
-          });
-        }
-        return err(502, 'Failed to process message', error);
+      if (!sessionId) {
+        return err(400, 'Missing sessionId');
       }
+
+      console.log('[edge] Ending session');
+      return await endSession(accessToken, sessionId, endUrl);
     }
 
     return err(400, 'Invalid action');
