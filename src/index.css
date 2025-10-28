@@ -18,9 +18,9 @@ All colors MUST be HSL.
     --popover-foreground: 222.2 84% 4.9%;
 
     /* Primacy Brand Colors */
-    --primary: 142 100% 28%;
+    --primary: 142 100% 26%;
     --primary-foreground: 0 0% 100%;
-    --primary-dark: 142 100% 22%;
+    --primary-dark: 142 100% 20%;
     
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -28,7 +28,7 @@ All colors MUST be HSL.
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 142 100% 28%;
+    --accent: 142 100% 26%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -36,11 +36,11 @@ All colors MUST be HSL.
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 142 100% 28%;
+    --ring: 142 100% 26%;
     
     /* Chat Interface Colors */
     --chat-background: 0 0% 98%;
-    --chat-user-bg: 142 100% 28%;
+    --chat-user-bg: 142 100% 26%;
     --chat-agent-bg: 0 0% 95%;
     --chat-border: 214.3 31.8% 91.4%;
 
@@ -74,9 +74,9 @@ All colors MUST be HSL.
     --popover-foreground: 210 40% 98%;
 
     /* Dark mode - keep Primacy green */
-    --primary: 142 100% 35%;
+    --primary: 142 100% 32%;
     --primary-foreground: 0 0% 100%;
-    --primary-dark: 142 100% 28%;
+    --primary-dark: 142 100% 26%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -84,7 +84,7 @@ All colors MUST be HSL.
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 142 100% 35%;
+    --accent: 142 100% 32%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
@@ -92,11 +92,11 @@ All colors MUST be HSL.
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 142 100% 35%;
+    --ring: 142 100% 32%;
     
     /* Dark mode chat colors */
     --chat-background: 222.2 84% 4.9%;
-    --chat-user-bg: 142 100% 35%;
+    --chat-user-bg: 142 100% 32%;
     --chat-agent-bg: 217.2 32.6% 17.5%;
     --chat-border: 217.2 32.6% 17.5%;
     --sidebar-background: 240 5.9% 10%;
