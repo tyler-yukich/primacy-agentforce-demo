@@ -19,7 +19,7 @@ const Index = () => {
     <div className="h-screen flex flex-col overflow-hidden">
       <Header />
       
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 flex">
         {chatMessage ? (
           <AgentforceChat 
             initialMessage={chatMessage}

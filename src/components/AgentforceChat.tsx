@@ -47,7 +47,7 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 h-full flex flex-col">
       <div className="w-full max-w-screen-xl mx-auto flex flex-col h-full bg-background">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-chat-border bg-background">
