@@ -17,9 +17,9 @@ const Header = () => {
       </div>
       
       {/* Hero Section */}
-      <div className="container mx-auto px-6 py-8 md:py-12">
+      <div className="container mx-auto px-6 py-16 md:py-24 lg:py-32">
         <div className="text-center">
-          <h1 className="text-xl md:text-2xl mb-8 font-semibold lg:text-4xl">PRIMACY_agent</h1>
+          <h1 className="text-xl md:text-2xl font-semibold lg:text-4xl">PRIMACY_agent</h1>
         </div>
       </div>
     </header>;
