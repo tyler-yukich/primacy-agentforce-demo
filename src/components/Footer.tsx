@@ -7,9 +7,12 @@ const Footer = () => {
       <footer className="bg-primary py-10 md:py-12 lg:py-16 px-6 md:px-12 lg:px-16 xl:px-20 2xl:px-24 mt-auto text-white">
         <div>
           {/* Main footer content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 lg:gap-20">
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-0">
+            {/* Vertical divider line - only visible on md+ screens */}
+            <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-px bg-white/20"></div>
+            
             {/* Left section - Logo, tagline, and CTA */}
-            <div>
+            <div className="pr-0 md:pr-12 lg:pr-16 xl:pr-20">
               <img src={primacyLogo} alt="Primacy" className="h-11 mb-8" />
               <p className="text-2xl font-medium mb-8 max-w-md">
                 Looking for a results-driven partner?
@@ -23,7 +26,7 @@ const Footer = () => {
             </div>
             
             {/* Right section - Links */}
-            <div>
+            <div className="pl-0 md:pl-12 lg:pl-16 xl:pl-20">
               <div className="grid grid-cols-2 gap-8">
                 <div>
                   <h3 className="text-lg font-semibold mb-4 text-white">INFO</h3>
