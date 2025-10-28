@@ -3,7 +3,7 @@ import primacyLogo from "@/assets/primacy_horizontal.svg";
 
 const Footer = () => {
   return (
-    <footer className="bg-green-600 py-8 px-6 mt-auto text-white">
+    <footer className="bg-primary py-8 px-6 mt-auto text-white">
       <div className="container mx-auto">
         {/* Main footer content */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-12">
@@ -52,11 +52,11 @@ const Footer = () => {
         </div>
         
         {/* Bottom section - Certifications and Copyright */}
-        <div className="border-t border-green-500 pt-8">
+        <div className="border-t border-primary-foreground/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 text-xs">
-                <span className="bg-white text-green-600 px-2 py-1 rounded text-xs font-semibold">B CORP</span>
+                <span className="bg-white text-primary px-2 py-1 rounded text-xs font-semibold">B CORP</span>
                 <span className="text-white">CERTIFIED</span>
               </div>
               <div className="text-xs text-white">
