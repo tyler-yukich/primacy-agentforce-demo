@@ -4,13 +4,13 @@ import primacyLogo from "@/assets/primacy_horizontal.svg";
 const Footer = () => {
   return (
     <>
-      <footer className="bg-primary py-10 md:py-12 lg:py-16 px-6 mt-auto text-white">
-        <div className="container mx-auto">
+      <footer className="bg-primary py-10 md:py-12 lg:py-16 px-6 md:px-12 lg:px-16 xl:px-20 2xl:px-24 mt-auto text-white">
+        <div>
           {/* Main footer content */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 lg:gap-20">
             {/* Left section - Logo, tagline, and CTA */}
             <div>
-              <img src={primacyLogo} alt="Primacy" className="h-14 mb-8" />
+              <img src={primacyLogo} alt="Primacy" className="h-11 mb-8" />
               <p className="text-2xl font-medium mb-8 max-w-md">
                 Looking for a results-driven partner?
               </p>
@@ -55,8 +55,8 @@ const Footer = () => {
       </footer>
       
       {/* Agency Logos Section - Separate white section */}
-      <div className="bg-white py-6 px-6">
-        <div className="container mx-auto">
+      <div className="bg-white py-6 px-6 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+        <div>
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             {/* Logo Placeholders */}
             <div className="flex items-center gap-4">
