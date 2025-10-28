@@ -44,7 +44,7 @@ const PreEngagement = ({
               key={suggestion}
               type="button"
               onClick={() => onStartChat(suggestion)}
-              className="inline-flex items-center justify-center rounded-full border border-input bg-background px-4 py-3 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-input bg-[#2c2e33] text-white px-4 py-3 text-sm hover:bg-primary hover:text-primary-foreground transition-colors"
               aria-label={`Ask: ${suggestion}`}
             >
               {suggestion}
