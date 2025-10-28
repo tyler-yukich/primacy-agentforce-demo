@@ -50,7 +50,7 @@ const PreEngagement = ({
           </div>
         </form>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
+        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
           {SUGGESTIONS.map((suggestion) => (
             <button
               key={suggestion}
