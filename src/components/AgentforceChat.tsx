@@ -70,7 +70,7 @@ const AgentforceChat = ({
         </div>
 
         {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background">
+        <div className="h-[300px] md:flex-1 md:min-h-0 overflow-y-auto p-4 bg-chat-background">
           {messages.map(message => <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />)}
           {(() => {
           const lastAssistantMessage = messages.filter(m => !m.isUser).pop();
