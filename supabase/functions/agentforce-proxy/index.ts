@@ -110,28 +110,39 @@ async function initializeSession(accessToken: string): Promise<{ sessionId: stri
   };
 }
 
-async function sendMessage(
+async function sendMessageAndStream(
   accessToken: string,
   sessionId: string,
   message: string
-): Promise<Response> {
+): Promise<ReadableStream> {
+  console.log('Sending message and streaming response:', message);
+  
+  // Use Salesforce's proper message format
+  const salesforceMessage = {
+    message: {
+      sequenceId: 1,
+      type: "Text",
+      text: message
+    }
+  };
+
   const response = await fetch(
-    `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/sessions/${sessionId}/messages`,
+    `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/sessions/${sessionId}/messages/stream`,
     {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify(salesforceMessage),
     }
   );
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Send message failed:', response.status, errorText);
+    console.error('Send message and stream failed:', response.status, errorText);
     
-    // If token expired, throw specific error
     if (response.status === 401) {
       throw new Error('TOKEN_EXPIRED');
     }
@@ -139,31 +150,66 @@ async function sendMessage(
     throw new Error('Failed to send message to Agentforce');
   }
 
-  return response;
-}
-
-async function streamMessages(
-  accessToken: string,
-  sessionId: string
-): Promise<Response> {
-  const response = await fetch(
-    `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/sessions/${sessionId}/messages/stream`,
-    {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'text/event-stream',
-      },
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Stream messages failed:', response.status, errorText);
-    throw new Error('Failed to stream messages from Agentforce');
+  if (!response.body) {
+    throw new Error('No response body available');
   }
 
-  return response;
+  // Transform Salesforce's SSE format to simpler format
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  
+  return new ReadableStream({
+    async start(controller) {
+      let buffer = '';
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            console.log('Salesforce stream complete');
+            controller.close();
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Process complete lines
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            
+            if (!trimmedLine || trimmedLine.startsWith(':')) continue;
+            
+            if (trimmedLine.startsWith('data: ')) {
+              const data = trimmedLine.slice(6);
+              
+              try {
+                const parsed = JSON.parse(data);
+                
+                // Extract text from Salesforce TextChunk events
+                if (parsed.message?.type === 'TextChunk' && parsed.message?.message) {
+                  const content = parsed.message.message;
+                  console.log('Extracted text chunk:', content);
+                  
+                  // Send transformed event to frontend
+                  const transformedEvent = `data: ${JSON.stringify({ content })}\n\n`;
+                  controller.enqueue(new TextEncoder().encode(transformedEvent));
+                }
+              } catch (e) {
+                console.warn('Failed to parse Salesforce SSE data:', data);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error in stream transformation:', error);
+        controller.error(error);
+      }
+    }
+  });
 }
 
 serve(async (req) => {
@@ -209,15 +255,12 @@ serve(async (req) => {
         );
       }
 
-      console.log('Sending message to Agentforce:', message);
+      console.log('Processing message request:', message);
       
       try {
-        await sendMessage(accessToken, sessionId, message);
+        const transformedStream = await sendMessageAndStream(accessToken, sessionId, message);
         
-        // Now stream the response
-        const streamResponse = await streamMessages(accessToken, sessionId);
-        
-        return new Response(streamResponse.body, {
+        return new Response(transformedStream, {
           headers: {
             ...corsHeaders,
             'Content-Type': 'text/event-stream',
@@ -231,10 +274,9 @@ serve(async (req) => {
           console.log('Token expired, refreshing and retrying');
           accessToken = await refreshAccessToken();
           
-          await sendMessage(accessToken, sessionId, message);
-          const streamResponse = await streamMessages(accessToken, sessionId);
+          const transformedStream = await sendMessageAndStream(accessToken, sessionId, message);
           
-          return new Response(streamResponse.body, {
+          return new Response(transformedStream, {
             headers: {
               ...corsHeaders,
               'Content-Type': 'text/event-stream',

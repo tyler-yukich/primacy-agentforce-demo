@@ -144,19 +144,11 @@ export function useAgentforce(): UseAgentforceReturn {
             try {
               const parsed = JSON.parse(data);
               
-              // Extract text content from various possible formats
-              let content = '';
-              if (parsed.choices?.[0]?.delta?.content) {
-                content = parsed.choices[0].delta.content;
-              } else if (parsed.content) {
-                content = parsed.content;
-              } else if (parsed.text) {
-                content = parsed.text;
-              } else if (typeof parsed === 'string') {
-                content = parsed;
-              }
+              // Edge function transforms Salesforce events to simple format
+              const content = parsed.content || '';
 
               if (content) {
+                console.log('Received content:', content);
                 assistantText += content;
                 
                 // Update the assistant message
