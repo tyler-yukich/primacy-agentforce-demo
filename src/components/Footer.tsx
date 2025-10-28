@@ -23,7 +23,7 @@ const Footer = () => {
               </p>
               <Button 
                 size="lg" 
-                className="bg-black hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium"
+                className="bg-black text-white rounded-full px-8 py-4 text-base font-medium"
               >
                 Let's Talk
               </Button>
