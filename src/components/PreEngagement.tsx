@@ -36,13 +36,13 @@ const PreEngagement = ({
             <Input 
               value={inputValue} 
               onChange={e => setInputValue(e.target.value)} 
-              placeholder="Type your question or tell us what you need help with..." 
+              placeholder="PRIMACY_agent is powered by Agentforce - an AI Agent that can answer your questions about Primacy and connect you with our Business Development team." 
               className="flex-1 w-full h-16 text-xl pr-16" 
             />
             <button
               type="submit"
               disabled={!inputValue.trim()}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-chat-agent-avatar text-white flex items-center justify-center text-2xl disabled:opacity-50 hover:opacity-90 transition-opacity"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-chat-agent-avatar text-white flex items-center justify-center text-2xl disabled:opacity-50 hover:bg-primary transition-colors"
               aria-label="Submit message"
             >
               ↑
