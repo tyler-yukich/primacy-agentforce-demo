@@ -18,16 +18,8 @@ const Header = () => {
       
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-8 md:py-12">
-        <div className="text-center relative">
+        <div className="text-center">
           <h1 className="text-xl md:text-2xl mb-8 font-semibold lg:text-4xl">PRIMACY_agent</h1>
-          
-          {/* Vertical Green Lines */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-8">
-            <div className="flex gap-2">
-              <div className="w-0.5 h-16 bg-accent"></div>
-              <div className="w-0.5 h-16 bg-accent"></div>
-            </div>
-          </div>
         </div>
       </div>
     </header>;
