@@ -34,7 +34,7 @@ const PreEngagement = ({
         <form onSubmit={handleSubmit} className="w-full mx-auto px-8 mt-12">
           <div className="flex w-full gap-3">
             <Input value={inputValue} onChange={e => setInputValue(e.target.value)} placeholder="Type your question or tell us what you need help with..." className="flex-1 min-w-0 h-16 text-xl" />
-            <Button type="submit" size="lg" disabled={!inputValue.trim()} className="!bg-chat-agent-avatar hover:!bg-chat-agent-avatar/90 h-16 px-8 text-2xl text-white">↑</Button>
+            <Button type="submit" size="lg" disabled={!inputValue.trim()} className="!bg-chat-agent-avatar hover:!bg-black h-16 px-8 text-2xl text-white">↑</Button>
           </div>
         </form>
 
