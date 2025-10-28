@@ -28,7 +28,7 @@ const PreEngagement = ({
         <div>
           
           
-          <p className="text-primary max-w-lg mx-auto text-4xl font-space-grotesk font-light">How can we help?</p>
+          <p className="text-primary max-w-lg mx-auto text-5xl font-space-grotesk font-light">How can we help?</p>
         </div>
 
         <form onSubmit={handleSubmit} className="w-full mx-auto px-8 mt-12">
