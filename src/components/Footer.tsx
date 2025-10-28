@@ -3,12 +3,12 @@ import primacyLogo from "@/assets/primacy_horizontal.svg";
 
 const Footer = () => {
   return (
-    <footer className="bg-primary py-8 px-6 mt-auto text-white">
+    <footer className="bg-primary py-8 md:py-10 lg:py-12 px-6 mt-auto text-white">
       <div className="container mx-auto">
         {/* Main footer content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 lg:gap-16 mb-12">
           {/* Left section - Logo, tagline, and CTA */}
-          <div className="lg:col-span-7">
+          <div>
             <img src={primacyLogo} alt="Primacy" className="h-12 mb-6" />
             <p className="text-xl mb-8 max-w-md">
               We're a full-service digital agency focused on strategy, design, and development.
@@ -22,7 +22,7 @@ const Footer = () => {
           </div>
           
           {/* Right section - Links */}
-          <div className="lg:col-span-5">
+          <div>
             <div className="grid grid-cols-2 gap-8">
               <div>
                 <h3 className="text-lg font-semibold mb-6 text-white">INFO</h3>
