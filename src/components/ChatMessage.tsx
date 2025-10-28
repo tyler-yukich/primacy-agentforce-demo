@@ -15,7 +15,7 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
       isUser ? "justify-end" : "justify-start"
     )}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-chat-agent-avatar flex items-center justify-center flex-shrink-0">
           <img src={agentforceLogo} alt="Agentforce" className="w-5 h-5" />
         </div>
       )}

@@ -28,6 +28,7 @@ export default {
           background: "hsl(var(--chat-background))",
           user: "hsl(var(--chat-user-bg))",
           agent: "hsl(var(--chat-agent-bg))",
+          "agent-avatar": "hsl(var(--chat-agent-avatar))",
           border: "hsl(var(--chat-border))",
         },
         secondary: {

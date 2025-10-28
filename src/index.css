@@ -42,6 +42,7 @@ All colors MUST be HSL.
     --chat-background: 0 0% 98%;
     --chat-user-bg: 142 100% 26%;
     --chat-agent-bg: 0 0% 95%;
+    --chat-agent-avatar: 216 7% 19%;
     --chat-border: 214.3 31.8% 91.4%;
 
     --radius: 0.5rem;
@@ -98,6 +99,7 @@ All colors MUST be HSL.
     --chat-background: 222.2 84% 4.9%;
     --chat-user-bg: 142 100% 32%;
     --chat-agent-bg: 217.2 32.6% 17.5%;
+    --chat-agent-avatar: 216 7% 19%;
     --chat-border: 217.2 32.6% 17.5%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;

@@ -56,7 +56,7 @@ const AgentforceChat = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-chat-border bg-background">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-chat-agent-avatar flex items-center justify-center">
               <img src={agentforceLogo} alt="Agentforce" className="w-6 h-6" />
             </div>
             <div>
