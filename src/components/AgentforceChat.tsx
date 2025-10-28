@@ -74,13 +74,17 @@ const AgentforceChat = ({ initialMessage, onClose }: AgentforceChatProps) => {
               isUser={message.isUser}
             />
           ))}
-          {isStreaming && (
-            <ChatMessage
-              message=""
-              isUser={false}
-              isTyping={true}
-            />
-          )}
+          {(() => {
+            const lastAssistantMessage = messages.filter(m => !m.isUser).pop();
+            const showTyping = isStreaming && (!lastAssistantMessage || lastAssistantMessage.text.length === 0);
+            return showTyping && (
+              <ChatMessage
+                message=""
+                isUser={false}
+                isTyping={true}
+              />
+            );
+          })()}
           {error && (
             <div className="text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg">
               {error}
