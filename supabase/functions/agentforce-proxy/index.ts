@@ -1,10 +1,28 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
+// CORS headers for all responses
+const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
 };
+
+// Helper functions for consistent responses
+function ok(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { 
+    status, 
+    headers: { ...CORS, 'Content-Type': 'application/json' } 
+  });
+}
+
+function err(status: number, msg: string, detail?: unknown) {
+  console.error('[edge error]', status, msg, detail ?? '');
+  return new Response(JSON.stringify({ error: msg }), { 
+    status, 
+    headers: { ...CORS, 'Content-Type': 'application/json' } 
+  });
+}
 
 // Token cache
 let cachedToken: { token: string; expiresAt: number } | null = null;
@@ -21,11 +39,11 @@ const SF_CONFIG = {
 async function getAccessToken(): Promise<string> {
   // Check if we have a valid cached token
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
-    console.log('Using cached Salesforce token');
+    console.log('[oauth] Using cached Salesforce token');
     return cachedToken.token;
   }
 
-  console.log('Fetching new Salesforce token');
+  console.log('[oauth] Fetching new Salesforce token');
   return await refreshAccessToken();
 }
 
@@ -43,7 +61,7 @@ async function refreshAccessToken(): Promise<string> {
     client_secret: clientSecret,
   });
 
-  console.log('Requesting token from:', SF_CONFIG.TOKEN_ENDPOINT);
+  console.log('[oauth] POST', SF_CONFIG.TOKEN_ENDPOINT);
   const response = await fetch(SF_CONFIG.TOKEN_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -52,113 +70,98 @@ async function refreshAccessToken(): Promise<string> {
     body: params.toString(),
   });
 
+  const bodyText = await response.text();
+  console.log('[oauth] status', response.status, 'body[0..500]=', bodyText.slice(0, 500));
+
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Token refresh failed:', response.status, errorText);
     throw new Error('Failed to obtain Salesforce access token');
   }
 
-  const data = await response.json();
+  const data = JSON.parse(bodyText);
   const token = data.access_token;
+  const scope = data.scope || 'N/A';
+  const issuedAt = data.issued_at || 'N/A';
   
-  // Cache token for 1.5 hours (Salesforce tokens typically last 2 hours)
+  // Cache token for 90 minutes
   cachedToken = {
     token,
-    expiresAt: Date.now() + (90 * 60 * 1000), // 90 minutes
+    expiresAt: Date.now() + (90 * 60 * 1000),
   };
 
-  console.log('Successfully obtained new Salesforce token');
+  console.log('[oauth] Successfully obtained new Salesforce token; scope:', scope, 'issued_at:', issuedAt);
   return token;
 }
 
-async function initializeSession(accessToken: string): Promise<{ sessionId: string; streamUrl: string }> {
+async function initSession(accessToken: string) {
   const sessionKey = `lovable-session-${crypto.randomUUID()}`;
   
-  const response = await fetch(
-    `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/agents/${SF_CONFIG.AGENT_ID}/sessions`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+  const url = `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/agents/${SF_CONFIG.AGENT_ID}/sessions`;
+  console.log('[session] POST', url);
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      externalSessionKey: sessionKey,
+      instanceConfig: {
+        endpoint: SF_CONFIG.DOMAIN
       },
-      body: JSON.stringify({
-        externalSessionKey: sessionKey,
-        instanceConfig: {
-          endpoint: SF_CONFIG.DOMAIN
-        },
-        streamingCapabilities: {
-          chunkTypes: ["Text"]
-        },
-        bypassUser: true
-      }),
-    }
-  );
+      streamingCapabilities: {
+        chunkTypes: ["Text"]
+      },
+      bypassUser: true
+    }),
+  });
+
+  const bodyText = await response.text();
+  console.log('[session] status', response.status, 'body[0..500]=', bodyText.slice(0, 500));
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Session initialization failed:', response.status, errorText);
     throw new Error('Failed to initialize Agentforce session');
   }
 
-  const data = await response.json();
-
-  // Log full response to debug (redact sensitive fields)
-  console.log('[session] Full Salesforce response keys:', Object.keys(data));
-
-  // Try multiple possible sessionId locations
+  const data = JSON.parse(bodyText);
+  console.log('[session] keys', Object.keys(data));
+  
   const sessionId = data.sessionId || data.id || data?.session?.id || data?.sessionKey;
-
+  
   if (!sessionId) {
-    console.error('[session] ERROR: No session ID found in response:', JSON.stringify(data, null, 2));
-    throw new Error('Salesforce did not return a valid session ID');
+    console.error('[session] No sessionId found in response');
+    throw new Error('No sessionId from Salesforce');
   }
 
   console.log('[session] Initialized session ID:', sessionId);
-
-  return {
-    sessionId,
-    streamUrl: data.links?.messagesStream || data.streamUrl || ''
-  };
+  return { sessionId };
 }
 
-async function sendMessageAndStream(
-  accessToken: string,
-  sessionId: string,
-  message: string
-): Promise<ReadableStream> {
-  console.log('Sending message and streaming response:', message);
+async function streamMessage(accessToken: string, sessionId: string, text: string) {
+  const url = `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/sessions/${sessionId}/messages/stream`;
+  console.log('[stream] POST', url);
   
-  // Use Salesforce's proper message format
-  const salesforceMessage = {
-    message: {
-      sequenceId: 1,
-      type: "Text",
-      text: message
-    }
-  };
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream'
+    },
+    body: JSON.stringify({
+      message: {
+        sequenceId: 1,
+        type: 'Text',
+        text
+      }
+    })
+  });
 
-  const response = await fetch(
-    `${SF_CONFIG.API_HOST}/einstein/ai-agent/v1/sessions/${sessionId}/messages/stream`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
-      },
-      body: JSON.stringify(salesforceMessage),
-    }
-  );
+  console.log('[stream] status', response.status);
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Send message and stream failed:', response.status, errorText);
-    
-    if (response.status === 401) {
-      throw new Error('TOKEN_EXPIRED');
-    }
-    
+    console.error('[stream] Failed:', errorText.slice(0, 500));
     throw new Error('Failed to send message to Agentforce');
   }
 
@@ -166,77 +169,62 @@ async function sendMessageAndStream(
     throw new Error('No response body available');
   }
 
-  // Transform Salesforce's SSE format to simpler format
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  
+  const encoder = new TextEncoder();
+
+  let chunkCount = 0;
+
   return new ReadableStream({
     async start(controller) {
-      let buffer = '';
-      
+      let buf = '';
       try {
-        while (true) {
+        for (;;) {
           const { done, value } = await reader.read();
-          
           if (done) {
-            console.log('Salesforce stream complete');
-            controller.close();
+            console.log('[stream] Complete');
             break;
           }
-
-          buffer += decoder.decode(value, { stream: true });
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() || '';
           
-          // Process complete lines
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
           for (const line of lines) {
-            const trimmedLine = line.trim();
+            const t = line.trim();
+            if (!t || t.startsWith(':')) continue;
+            if (!t.startsWith('data: ')) continue;
             
-            if (!trimmedLine || trimmedLine.startsWith(':')) continue;
-            
-            if (trimmedLine.startsWith('data: ')) {
-              const data = trimmedLine.slice(6);
+            const payload = t.slice(6);
+            try {
+              const parsed = JSON.parse(payload);
+              const m = parsed.message;
+              const content =
+                (m && (m.message || m.text || m.delta || m.content)) ||
+                parsed.content;
               
-              try {
-                const parsed = JSON.parse(data);
-                
-                // Extract text from various Salesforce event types
-                const message = parsed.message;
-                const content = 
-                  message?.message ||      // TextChunk
-                  message?.text ||         // TextResponseChunk
-                  message?.delta ||        // TextDelta
-                  message?.content ||      // Generic content
-                  parsed.content;          // Direct content
-
-                if (content && typeof content === 'string') {
-                  console.log('[stream] Received chunk length:', content.length);
-                  
-                  // Send transformed event to frontend
-                  const transformedEvent = `data: ${JSON.stringify({ content })}\n\n`;
-                  controller.enqueue(new TextEncoder().encode(transformedEvent));
-                } else if (message?.type) {
-                  console.log('[stream] Non-text chunk type:', message.type);
+              if (typeof content === 'string' && content.length) {
+                chunkCount++;
+                if (chunkCount <= 10) {
+                  console.log('[stream] Received chunk of length:', content.length);
                 }
-              } catch (e) {
-                console.warn('Failed to parse Salesforce SSE data:', data);
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
               }
-            }
+            } catch {}
           }
         }
-      } catch (error) {
-        console.error('Error in stream transformation:', error);
-        controller.error(error);
+        controller.close();
+      } catch (e) {
+        console.error('[stream] Error:', e);
+        controller.error(e);
       }
     }
   });
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: CORS });
   }
 
   try {
@@ -248,78 +236,64 @@ serve(async (req) => {
     try {
       accessToken = await getAccessToken();
     } catch (error) {
-      console.error('Failed to get access token:', error);
-      return new Response(
-        JSON.stringify({ error: 'Sorry, the agent is unavailable right now. Please try again shortly.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return err(500, 'Agent unavailable - authentication failed', error);
     }
 
-    // Handle different actions
+    // Handle init action
     if (action === 'init') {
-      console.log('Initializing new Agentforce session');
-      const { sessionId, streamUrl } = await initializeSession(accessToken);
-      
-      return new Response(
-        JSON.stringify({ sessionId, streamUrl }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.log('[edge] Initializing new Agentforce session');
+      try {
+        const result = await initSession(accessToken);
+        return ok(result);
+      } catch (error) {
+        return err(502, 'Failed to initialize session', error);
+      }
     }
 
+    // Handle message action
     if (action === 'message') {
       const { sessionId, message } = await req.json();
       
       if (!sessionId || !message) {
-        return new Response(
-          JSON.stringify({ error: 'Missing sessionId or message' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return err(400, 'Missing sessionId or message');
       }
 
-      console.log('Processing message request:', message);
+      console.log('[edge] Processing message request');
       
       try {
-        const transformedStream = await sendMessageAndStream(accessToken, sessionId, message);
+        const stream = await streamMessage(accessToken, sessionId, message);
         
-        return new Response(transformedStream, {
+        return new Response(stream, {
           headers: {
-            ...corsHeaders,
+            ...CORS,
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-          },
+            'Connection': 'keep-alive'
+          }
         });
       } catch (error) {
-        // If token expired, refresh and retry once
-        if (error instanceof Error && error.message === 'TOKEN_EXPIRED') {
-          console.log('Token expired, refreshing and retrying');
+        // Token expired - retry once
+        if (error instanceof Error && error.message.includes('401')) {
+          console.log('[edge] Token expired, refreshing and retrying');
           accessToken = await refreshAccessToken();
+          const stream = await streamMessage(accessToken, sessionId, message);
           
-          const transformedStream = await sendMessageAndStream(accessToken, sessionId, message);
-          
-          return new Response(transformedStream, {
+          return new Response(stream, {
             headers: {
-              ...corsHeaders,
+              ...CORS,
               'Content-Type': 'text/event-stream',
               'Cache-Control': 'no-cache',
-              'Connection': 'keep-alive',
-            },
+              'Connection': 'keep-alive'
+            }
           });
         }
-        throw error;
+        return err(502, 'Failed to process message', error);
       }
     }
 
-    return new Response(
-      JSON.stringify({ error: 'Invalid action' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return err(400, 'Invalid action');
 
   } catch (error) {
-    console.error('Error in agentforce-proxy:', error);
-    return new Response(
-      JSON.stringify({ error: 'Sorry, the agent is unavailable right now. Please try again shortly.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return err(500, 'Internal server error', error);
   }
 });

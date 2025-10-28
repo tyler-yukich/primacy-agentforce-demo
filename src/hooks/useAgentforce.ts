@@ -41,6 +41,8 @@ export function useAgentforce(): UseAgentforceReturn {
         });
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[hook] Init failed with status:', response.status, 'body:', errorText);
           throw new Error('Failed to initialize session');
         }
 
