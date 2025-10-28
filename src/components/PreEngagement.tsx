@@ -24,7 +24,7 @@ const PreEngagement = ({
     }
   };
   return <div className="flex-1 flex items-center justify-center px-6">
-      <div className="text-center w-full max-w-screen-xl mx-auto my-[200px]">
+      <div className="text-center w-full max-w-screen-xl mx-auto mt-[150px] mb-[200px]">
         <div>
           
           
