@@ -13,7 +13,9 @@ const SF_CONFIG = {
   DOMAIN: 'https://storm-f6d3229baed283.my.salesforce.com',
   API_HOST: 'https://api.salesforce.com',
   AGENT_ID: '0XxKY000000Mjwj0AC',
-  TOKEN_ENDPOINT: 'https://login.salesforce.com/services/oauth2/token'
+  get TOKEN_ENDPOINT() {
+    return `${this.DOMAIN}/services/oauth2/token`;
+  }
 };
 
 async function getAccessToken(): Promise<string> {
@@ -41,6 +43,7 @@ async function refreshAccessToken(): Promise<string> {
     client_secret: clientSecret,
   });
 
+  console.log('Requesting token from:', SF_CONFIG.TOKEN_ENDPOINT);
   const response = await fetch(SF_CONFIG.TOKEN_ENDPOINT, {
     method: 'POST',
     headers: {
