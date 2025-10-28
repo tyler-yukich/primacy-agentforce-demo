@@ -1,5 +1,9 @@
 import { Button } from "@/components/ui/button";
 import primacyLogo from "@/assets/primacy_horizontal.svg";
+import duLogo from "@/assets/du-logo.png";
+import pLogo from "@/assets/p-logo.svg";
+import mLogo from "@/assets/m-logo.svg";
+import zLogo from "@/assets/z-logo.svg";
 
 const Footer = () => {
   return (
@@ -61,20 +65,12 @@ const Footer = () => {
       <div className="bg-white py-6 px-6 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
         <div>
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            {/* Logo Placeholders */}
+            {/* Agency Logos */}
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gray-800 flex items-center justify-center text-white font-bold text-sm">
-                DU
-              </div>
-              <div className="w-16 h-16 bg-primary flex items-center justify-center text-white font-bold text-sm">
-                P
-              </div>
-              <div className="w-16 h-16 bg-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                M.
-              </div>
-              <div className="w-16 h-16 bg-cyan-500 flex items-center justify-center text-white font-bold text-sm">
-                /Z
-              </div>
+              <img src={duLogo} alt="Digital United" className="w-16 h-16" />
+              <img src={pLogo} alt="Primacy" className="w-16 h-16" />
+              <img src={mLogo} alt="M" className="w-16 h-16" />
+              <img src={zLogo} alt="Z" className="w-16 h-16" />
             </div>
             
             {/* Copyright Text */}
