@@ -5,12 +5,11 @@ const Footer = () => {
   return (
     <>
       <footer className="bg-primary py-10 md:py-12 lg:py-16 px-6 md:px-12 lg:px-16 xl:px-20 2xl:px-24 mt-auto text-white">
-        <div className="relative">
-          {/* Vertical divider line - only visible on md+ screens */}
-          <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-[3px] bg-white/20 -translate-x-1/2"></div>
-          
+        <div>
           {/* Main footer content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-0">
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-0">
+            {/* Vertical divider line - only visible on md+ screens */}
+            <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-[1.5px] bg-white -translate-x-1/2"></div>
             
             {/* Left section - Logo, tagline, and CTA */}
             <div className="pr-0 md:pr-12 lg:pr-16 xl:pr-20">
