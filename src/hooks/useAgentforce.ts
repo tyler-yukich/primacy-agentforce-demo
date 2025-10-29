@@ -114,12 +114,7 @@ export function useAgentforce(): UseAgentforceReturn {
       let assistantText = '';
       let assistantMessageId = `assistant-${Date.now()}`;
       let buffer = '';
-
-      // Add initial assistant message
-      setMessages(prev => [
-        ...prev,
-        { id: assistantMessageId, text: '', isUser: false }
-      ]);
+      let assistantMessageCreated = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -159,26 +154,36 @@ export function useAgentforce(): UseAgentforceReturn {
               const content = parsed.content;
           
           if (content) {
-            
-            setMessages(prev =>
-                  prev.map(msg => {
-                    if (msg.id !== assistantMessageId) return msg;
-                    
-                    const currentText = msg.text || '';
-                    const newContent = String(content);
-                    
-                    // If incoming content starts with current text, it's an aggregate - replace
-                    if (newContent.startsWith(currentText) && newContent.length > currentText.length) {
-                      console.log('[dedup] Detected aggregate, replacing');
-                      assistantText = newContent;
-                      return { ...msg, text: newContent };
-                    }
-                    
-                    // Otherwise, append as delta
-                    assistantText = currentText + newContent;
-                    return { ...msg, text: assistantText };
-                  })
-                );
+            // Create assistant message on first content chunk
+            if (!assistantMessageCreated) {
+              assistantMessageCreated = true;
+              setMessages(prev => [
+                ...prev,
+                { id: assistantMessageId, text: String(content), isUser: false }
+              ]);
+              assistantText = String(content);
+            } else {
+              // Update existing assistant message
+              setMessages(prev =>
+                prev.map(msg => {
+                  if (msg.id !== assistantMessageId) return msg;
+                  
+                  const currentText = msg.text || '';
+                  const newContent = String(content);
+                  
+                  // If incoming content starts with current text, it's an aggregate - replace
+                  if (newContent.startsWith(currentText) && newContent.length > currentText.length) {
+                    console.log('[dedup] Detected aggregate, replacing');
+                    assistantText = newContent;
+                    return { ...msg, text: newContent };
+                  }
+                  
+                  // Otherwise, append as delta
+                  assistantText = currentText + newContent;
+                  return { ...msg, text: assistantText };
+                })
+              );
+            }
               }
             } catch (e) {
               console.warn('Failed to parse SSE data:', data, e);
@@ -190,13 +195,22 @@ export function useAgentforce(): UseAgentforceReturn {
       // If no text was received, show a fallback message
       if (!assistantText) {
         console.warn('[hook] Stream completed but no content received');
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === assistantMessageId 
-              ? { ...msg, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?" }
-              : msg
-          )
-        );
+        if (!assistantMessageCreated) {
+          // Create message with fallback text if it was never created
+          setMessages(prev => [
+            ...prev,
+            { id: assistantMessageId, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?", isUser: false }
+          ]);
+        } else {
+          // Update existing message with fallback text
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === assistantMessageId 
+                ? { ...msg, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?" }
+                : msg
+            )
+          );
+        }
       }
 
     } catch (err) {
