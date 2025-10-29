@@ -12,20 +12,86 @@ interface UseAgentforceReturn {
   sessionId: string | null;
   isInitializing: boolean;
   isStreaming: boolean;
+  isChunking: boolean;
   error: string | null;
 }
 
 export function useAgentforce(): UseAgentforceReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isChunking, setIsChunking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const sessionInitialized = useRef(false);
   const pendingMessageRef = useRef<string | null>(null);
   const processingPendingRef = useRef(false);
+  const chunkingTimeouts = useRef<NodeJS.Timeout[]>([]);
 
   const edgeFunctionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agentforce-proxy`;
+
+  // Function to split message into chunks and render sequentially
+  const splitAndRenderChunks = async (messageId: string, fullText: string) => {
+    const BREAK_DELIMITER = '[[BREAK]]';
+    
+    if (!fullText.includes(BREAK_DELIMITER)) {
+      return; // No splitting needed
+    }
+
+    setIsChunking(true);
+    
+    // Split the message into chunks
+    const chunks = fullText.split(BREAK_DELIMITER).map(chunk => chunk.trim()).filter(chunk => chunk.length > 0);
+    
+    if (chunks.length <= 1) {
+      setIsChunking(false);
+      return; // Only one chunk, no need to split
+    }
+
+    // Remove the original message
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+
+    // Render chunks sequentially with delays
+    chunks.forEach((chunk, index) => {
+      const timeout = setTimeout(() => {
+        // Add typing indicator before each chunk (except the first)
+        if (index > 0) {
+          const typingId = `typing-${Date.now()}-${index}`;
+          setMessages(prev => [...prev, { 
+            id: typingId, 
+            text: '', 
+            isUser: false 
+          }]);
+
+          // Replace typing indicator with actual chunk after a short delay
+          setTimeout(() => {
+            setMessages(prev => {
+              const filtered = prev.filter(msg => msg.id !== typingId);
+              return [...filtered, {
+                id: `${messageId}-chunk-${index}`,
+                text: chunk,
+                isUser: false
+              }];
+            });
+
+            // Mark chunking as complete after last chunk
+            if (index === chunks.length - 1) {
+              setIsChunking(false);
+            }
+          }, 300); // Short delay for typing indicator
+        } else {
+          // First chunk - no typing indicator needed
+          setMessages(prev => [...prev, {
+            id: `${messageId}-chunk-${index}`,
+            text: chunk,
+            isUser: false
+          }]);
+        }
+      }, index * 800); // 800ms delay between chunks (500ms + 300ms typing)
+
+      chunkingTimeouts.current.push(timeout);
+    });
+  };
 
   // Initialize session on mount
   useEffect(() => {
@@ -66,6 +132,11 @@ export function useAgentforce(): UseAgentforceReturn {
     };
 
     initSession();
+    
+    // Cleanup chunking timeouts on unmount
+    return () => {
+      chunkingTimeouts.current.forEach(timeout => clearTimeout(timeout));
+    };
   }, [edgeFunctionUrl]);
 
   // Process pending message when session becomes available
@@ -188,6 +259,9 @@ export function useAgentforce(): UseAgentforceReturn {
                 )
               );
             }
+          } else {
+            // Check for [[BREAK]] delimiter and split if found
+            await splitAndRenderChunks(assistantMessageId, assistantText);
           }
 
         } catch (err) {
@@ -349,6 +423,9 @@ export function useAgentforce(): UseAgentforceReturn {
             )
           );
         }
+      } else {
+        // Check for [[BREAK]] delimiter and split if found
+        await splitAndRenderChunks(assistantMessageId, assistantText);
       }
 
     } catch (err) {
@@ -368,6 +445,7 @@ export function useAgentforce(): UseAgentforceReturn {
     sessionId,
     isInitializing,
     isStreaming,
+    isChunking,
     error,
   };
 }

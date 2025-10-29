@@ -19,13 +19,14 @@ const AgentforceChat = ({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const wasStreamingRef = useRef(false);
   
-  const {
-    messages,
-    sendMessage,
-    sessionId,
+  const { 
+    messages, 
+    sendMessage, 
+    sessionId, 
     isInitializing,
     isStreaming,
-    error
+    isChunking,
+    error 
   } = useAgentforce();
 
   const NEAR_BOTTOM_PX = 80;
@@ -69,8 +70,8 @@ const AgentforceChat = ({
     const container = messagesContainerRef.current;
     if (!container) return;
 
-    // If we are currently streaming, batch updates and use instant scroll
-    if (isStreaming) {
+    // If we are currently streaming or chunking, batch updates and use instant scroll
+    if (isStreaming || isChunking) {
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
       scrollTimeoutRef.current = setTimeout(() => {
         scrollToBottom({ smooth: false });
@@ -85,11 +86,11 @@ const AgentforceChat = ({
       }
     }
 
-    wasStreamingRef.current = isStreaming;
-  }, [messages, isStreaming]);
+    wasStreamingRef.current = isStreaming || isChunking;
+  }, [messages, isStreaming, isChunking]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isStreaming) return;
+    if (!inputValue.trim() || isStreaming || isChunking) return;
     const messageToSend = inputValue;
     setInputValue("");
     await sendMessage(messageToSend);
@@ -124,12 +125,18 @@ const AgentforceChat = ({
           className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background"
           style={{ overscrollBehavior: 'contain', scrollbarGutter: 'stable' }}
         >
-          {messages.map(message => <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />)}
+          {messages.map(message => 
+            message.text === '' && !message.isUser ? (
+              <ChatMessage key={message.id} message="" isUser={false} isTyping={true} />
+            ) : (
+              <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />
+            )
+          )}
           {(() => {
-          const lastMessage = messages[messages.length - 1];
-          const showTyping = isStreaming && lastMessage?.isUser === true;
-          return showTyping && <ChatMessage message="" isUser={false} isTyping={true} />;
-        })()}
+            const lastMessage = messages[messages.length - 1];
+            const showTyping = isStreaming && lastMessage?.isUser === true;
+            return showTyping && <ChatMessage message="" isUser={false} isTyping={true} />;
+          })()}
           {error && <div className="text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg">
               {error}
             </div>}
@@ -139,8 +146,8 @@ const AgentforceChat = ({
         {/* Input */}
         <div className="p-4 border-t border-chat-border">
           <div className="flex gap-2">
-            <Input value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..." className="flex-1" disabled={isStreaming} />
-            <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isStreaming} size="sm" className="bg-primary hover:bg-primary-dark">
+            <Input value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyPress={handleKeyPress} placeholder="Type your message..." className="flex-1" disabled={isStreaming || isChunking} />
+            <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isStreaming || isChunking} size="sm" className="bg-primary hover:bg-primary-dark">
               Send
             </Button>
           </div>
