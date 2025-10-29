@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
 import { User } from "lucide-react";
 import agentforceLogo from "@/assets/agentforce-logo.svg";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessageProps {
   message: string;
@@ -33,7 +35,14 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce-dot" style={{ animationDelay: "0.4s" }}></div>
           </div>
         ) : (
-          <p className="text-sm leading-relaxed whitespace-pre-line">{message}</p>
+          <div className="text-sm leading-relaxed prose prose-sm max-w-none 
+              prose-p:my-1 prose-ul:my-2 prose-li:my-0.5 
+              prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-800
+              prose-strong:font-semibold prose-strong:text-foreground">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {message}
+            </ReactMarkdown>
+          </div>
         )}
       </div>
       
