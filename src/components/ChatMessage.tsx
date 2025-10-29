@@ -11,8 +11,8 @@ interface ChatMessageProps {
 const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
   return (
     <div className={cn(
-      "flex gap-3 mb-4",
-      isUser ? "justify-end" : "justify-start animate-fade-in"
+      "flex gap-3 mb-4 animate-fade-in",
+      isUser ? "justify-end" : "justify-start"
     )}>
       {!isUser && (
         <div className="w-8 h-8 rounded-full bg-chat-agent-avatar flex items-center justify-center flex-shrink-0">
