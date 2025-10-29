@@ -33,8 +33,11 @@ const AgentforceChat = ({
     const hasScrollbar = container.scrollHeight > container.clientHeight;
     if (!hasScrollbar) return;
     
-    // Smooth scroll to bottom
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Smooth scroll to bottom of the container only (not the page)
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth"
+    });
   };
 
   // Send initial message immediately on mount (optimistic UI)
