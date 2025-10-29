@@ -40,9 +40,6 @@ const AgentforceChat = ({
     const hasScrollbar = container.scrollHeight > container.clientHeight;
     if (!hasScrollbar) return;
 
-    // Respect user if not near the bottom
-    if (!isNearBottom(container)) return;
-
     const smooth = !!opts?.smooth;
     const prev = container.style.scrollBehavior;
     container.style.scrollBehavior = smooth ? 'smooth' : 'auto';
