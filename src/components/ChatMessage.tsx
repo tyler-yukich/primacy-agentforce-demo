@@ -35,11 +35,12 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
             <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce-dot" style={{ animationDelay: "0.4s" }}></div>
           </div>
         ) : (
-          <div className="text-sm leading-relaxed prose prose-sm max-w-none 
-              prose-p:my-1 prose-p:text-inherit prose-ul:my-2 prose-li:my-0.5 
-              prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-800
-              prose-strong:font-semibold prose-strong:text-inherit
-              prose-ul:text-inherit prose-li:text-inherit">
+          <div className={cn(
+            "text-sm leading-relaxed prose prose-sm",
+            isUser 
+              ? "prose-p:my-1 prose-ul:my-2 prose-li:my-0.5 prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-li:text-primary-foreground prose-ul:text-primary-foreground prose-strong:text-primary-foreground prose-code:text-primary-foreground prose-a:underline prose-a:text-primary-foreground hover:prose-a:text-primary-foreground/90"
+              : "max-w-none prose-p:my-1 prose-ul:my-2 prose-li:my-0.5 prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-800 prose-strong:font-semibold"
+          )}>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message}
             </ReactMarkdown>
