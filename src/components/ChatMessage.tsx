@@ -36,9 +36,10 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
           </div>
         ) : (
           <div className="text-sm leading-relaxed prose prose-sm max-w-none 
-              prose-p:my-1 prose-ul:my-2 prose-li:my-0.5 
+              prose-p:my-1 prose-p:text-inherit prose-ul:my-2 prose-li:my-0.5 
               prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-800
-              prose-strong:font-semibold prose-strong:text-foreground">
+              prose-strong:font-semibold prose-strong:text-inherit
+              prose-ul:text-inherit prose-li:text-inherit">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message}
             </ReactMarkdown>
