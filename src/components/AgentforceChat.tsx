@@ -23,14 +23,6 @@ const AgentforceChat = ({
     isStreaming,
     error
   } = useAgentforce();
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth"
-    });
-  };
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   // Send initial message when session is ready
   useEffect(() => {
