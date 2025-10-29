@@ -118,6 +118,16 @@ export default {
           "50%": {
             opacity: "1"
           }
+        },
+        "bounce-dot": {
+          "0%, 80%, 100%": { 
+            transform: "translateY(0)",
+            opacity: "0.7"
+          },
+          "40%": { 
+            transform: "translateY(-8px)",
+            opacity: "1"
+          }
         }
       },
       animation: {
@@ -126,6 +136,7 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         "pulse-dot": "pulse-dot 1.4s ease-in-out infinite",
+        "bounce-dot": "bounce-dot 1.4s infinite ease-in-out",
       },
     },
   },

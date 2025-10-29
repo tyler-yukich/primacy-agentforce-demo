@@ -27,13 +27,10 @@ const ChatMessage = ({ message, isUser, isTyping }: ChatMessageProps) => {
           : "bg-chat-agent text-foreground"
       )}>
         {isTyping ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Agentforce is responding</span>
-            <div className="flex gap-1">
-              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse"></div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse delay-100"></div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full animate-pulse delay-200"></div>
-            </div>
+          <div className="flex items-center gap-1 py-2">
+            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce-dot"></div>
+            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce-dot" style={{ animationDelay: "0.2s" }}></div>
+            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce-dot" style={{ animationDelay: "0.4s" }}></div>
           </div>
         ) : (
           <p className="text-sm leading-relaxed whitespace-pre-line">{message}</p>
