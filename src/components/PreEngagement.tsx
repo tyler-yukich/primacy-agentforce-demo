@@ -13,12 +13,10 @@ const PreEngagement = ({
   const isMobile = useIsMobile();
   
   const SUGGESTIONS = [
-    "💬 What kinds of clients do you usually work with?",
-    "📊 Can you share an example of results you've achieved for clients like me?",
-    "⚙️ What digital services or specialties does Primacy offer?",
-    "🎓 Have you done work for universities or educational institutions?",
-    "🤝 What's it like to start a project with your team?",
-    "🏢 Can I talk to someone about a potential project?"
+    "What kinds of clients do you usually work with?",
+    "Have you done work for universities or educational institutions?",
+    "What services does Primacy offer?",
+    "What's it like to start a project with your team?"
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
