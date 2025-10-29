@@ -16,6 +16,7 @@ const AgentforceChat = ({
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const {
     messages,
     sendMessage,
@@ -26,18 +27,26 @@ const AgentforceChat = ({
   } = useAgentforce();
 
   const scrollToBottom = () => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
+    // Clear any pending scroll to batch rapid updates
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
     
-    // Only auto-scroll if content exceeds container height (scrollbar is active)
-    const hasScrollbar = container.scrollHeight > container.clientHeight;
-    if (!hasScrollbar) return;
-    
-    // Smooth scroll to bottom of the container only (not the page)
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: "smooth"
-    });
+    // Small delay to batch multiple scroll requests
+    scrollTimeoutRef.current = setTimeout(() => {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+      
+      // Only auto-scroll if content exceeds container height (scrollbar is active)
+      const hasScrollbar = container.scrollHeight > container.clientHeight;
+      if (!hasScrollbar) return;
+      
+      // Smooth scroll to bottom of the container only (not the page)
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth"
+      });
+    }, 50);
   };
 
   // Send initial message immediately on mount (optimistic UI)
@@ -86,7 +95,7 @@ const AgentforceChat = ({
         </div>
 
         {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background">
+        <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto scroll-smooth p-4 bg-chat-background">
           {messages.map(message => <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />)}
           {(() => {
           const lastMessage = messages[messages.length - 1];
