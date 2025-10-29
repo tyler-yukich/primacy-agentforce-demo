@@ -22,6 +22,8 @@ export function useAgentforce(): UseAgentforceReturn {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const sessionInitialized = useRef(false);
+  const pendingMessageRef = useRef<string | null>(null);
+  const processingPendingRef = useRef(false);
 
   const edgeFunctionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agentforce-proxy`;
 
@@ -66,15 +68,143 @@ export function useAgentforce(): UseAgentforceReturn {
     initSession();
   }, [edgeFunctionUrl]);
 
-  const sendMessage = async (text: string) => {
-    if (!sessionId) {
-      setError('Session not initialized. Please refresh the page.');
-      return;
-    }
+  // Process pending message when session becomes available
+  useEffect(() => {
+    if (sessionId && pendingMessageRef.current && !processingPendingRef.current) {
+      processingPendingRef.current = true;
+      const messageToSend = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      
+      // Execute the streaming logic
+      (async () => {
+        try {
+          console.log('Processing queued message:', messageToSend);
+          
+          const response = await fetch(`${edgeFunctionUrl}?action=message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sessionId,
+              message: messageToSend,
+            }),
+          });
 
+          if (!response.ok) {
+            throw new Error('Failed to send message');
+          }
+
+          // Handle streaming response
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+
+          if (!reader) {
+            throw new Error('No response stream available');
+          }
+
+          let assistantText = '';
+          let assistantMessageId = `assistant-${Date.now()}`;
+          let buffer = '';
+          let assistantMessageCreated = false;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+              console.log('Stream complete');
+              break;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              
+              if (!trimmedLine || trimmedLine.startsWith(':')) continue;
+              
+              if (trimmedLine.startsWith('data: ')) {
+                const data = trimmedLine.slice(6);
+                
+                if (data === '[DONE]') {
+                  console.log('Received [DONE] signal - finalizing stream');
+                  setIsStreaming(false);
+                  break;
+                }
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.content;
+              
+                  if (content) {
+                    if (!assistantMessageCreated) {
+                      assistantMessageCreated = true;
+                      setMessages(prev => [
+                        ...prev,
+                        { id: assistantMessageId, text: String(content), isUser: false }
+                      ]);
+                      assistantText = String(content);
+                    } else {
+                      setMessages(prev =>
+                        prev.map(msg => {
+                          if (msg.id !== assistantMessageId) return msg;
+                          
+                          const currentText = msg.text || '';
+                          const newContent = String(content);
+                          
+                          if (newContent.startsWith(currentText) && newContent.length > currentText.length) {
+                            assistantText = newContent;
+                            return { ...msg, text: newContent };
+                          }
+                          
+                          assistantText = currentText + newContent;
+                          return { ...msg, text: assistantText };
+                        })
+                      );
+                    }
+                  }
+                } catch (e) {
+                  console.warn('Failed to parse SSE data:', data, e);
+                }
+              }
+            }
+          }
+
+          if (!assistantText) {
+            if (!assistantMessageCreated) {
+              setMessages(prev => [
+                ...prev,
+                { id: assistantMessageId, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?", isUser: false }
+              ]);
+            } else {
+              setMessages(prev => 
+                prev.map(msg => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?" }
+                    : msg
+                )
+              );
+            }
+          }
+
+        } catch (err) {
+          console.error('Error processing queued message:', err);
+          setError('Failed to send message. Please try again.');
+        } finally {
+          setIsStreaming(false);
+          processingPendingRef.current = false;
+        }
+      })();
+    }
+  }, [sessionId, edgeFunctionUrl]);
+
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Add user message immediately
+    // Add user message immediately (optimistic UI)
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       text,
@@ -82,8 +212,16 @@ export function useAgentforce(): UseAgentforceReturn {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setIsStreaming(true);
     setError(null);
+
+    // If session not ready, queue the message
+    if (!sessionId) {
+      pendingMessageRef.current = text;
+      setIsStreaming(true);
+      return;
+    }
+
+    setIsStreaming(true);
 
     try {
       console.log('Sending message to Agentforce:', text);

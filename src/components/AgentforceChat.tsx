@@ -65,8 +65,8 @@ const AgentforceChat = ({
         <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background">
           {messages.map(message => <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />)}
           {(() => {
-          const lastAssistantMessage = messages.filter(m => !m.isUser).pop();
-          const showTyping = isStreaming && (!lastAssistantMessage || lastAssistantMessage.text.length === 0);
+          const lastMessage = messages[messages.length - 1];
+          const showTyping = isStreaming && lastMessage?.isUser === true;
           return showTyping && <ChatMessage message="" isUser={false} isTyping={true} />;
         })()}
           {error && <div className="text-center text-sm text-red-600 bg-red-50 p-3 rounded-lg">
