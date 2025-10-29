@@ -24,13 +24,15 @@ const AgentforceChat = ({
     error
   } = useAgentforce();
 
-  // Send initial message when session is ready
+  // Send initial message immediately on mount (optimistic UI)
+  const initialMessageSent = useRef(false);
   useEffect(() => {
-    if (sessionId && !isInitializing && !isStreaming && messages.length === 0 && initialMessage) {
+    if (initialMessage && !initialMessageSent.current) {
+      initialMessageSent.current = true;
       console.log('[chat] Sending initial message:', initialMessage);
       sendMessage(initialMessage);
     }
-  }, [sessionId, isInitializing, isStreaming]);
+  }, []); // Empty deps - only run once on mount
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isStreaming) return;
     const messageToSend = inputValue;
