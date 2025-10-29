@@ -15,6 +15,7 @@ const AgentforceChat = ({
 }: AgentforceChatProps) => {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const {
     messages,
     sendMessage,
@@ -23,6 +24,18 @@ const AgentforceChat = ({
     isStreaming,
     error
   } = useAgentforce();
+
+  const scrollToBottom = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    // Only auto-scroll if content exceeds container height (scrollbar is active)
+    const hasScrollbar = container.scrollHeight > container.clientHeight;
+    if (!hasScrollbar) return;
+    
+    // Smooth scroll to bottom
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   // Send initial message immediately on mount (optimistic UI)
   const initialMessageSent = useRef(false);
@@ -33,6 +46,12 @@ const AgentforceChat = ({
       sendMessage(initialMessage);
     }
   }, []); // Empty deps - only run once on mount
+
+  // Auto-scroll when messages change or typing indicator appears
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isStreaming]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isStreaming) return;
     const messageToSend = inputValue;
@@ -64,7 +83,7 @@ const AgentforceChat = ({
         </div>
 
         {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background">
+        <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background">
           {messages.map(message => <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />)}
           {(() => {
           const lastMessage = messages[messages.length - 1];
