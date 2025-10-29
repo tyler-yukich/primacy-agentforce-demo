@@ -17,6 +17,8 @@ const AgentforceChat = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wasStreamingRef = useRef(false);
+  
   const {
     messages,
     sendMessage,
@@ -26,27 +28,33 @@ const AgentforceChat = ({
     error
   } = useAgentforce();
 
-  const scrollToBottom = () => {
-    // Clear any pending scroll to batch rapid updates
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
+  const NEAR_BOTTOM_PX = 80;
+  const isNearBottom = (c: HTMLDivElement) =>
+    c.scrollHeight - (c.scrollTop + c.clientHeight) < NEAR_BOTTOM_PX;
+
+  const scrollToBottom = (opts?: { smooth?: boolean }) => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Only auto-scroll if content exceeds container height (scrollbar is active)
+    const hasScrollbar = container.scrollHeight > container.clientHeight;
+    if (!hasScrollbar) return;
+
+    // Respect user if not near the bottom
+    if (!isNearBottom(container)) return;
+
+    const smooth = !!opts?.smooth;
+    const prev = container.style.scrollBehavior;
+    container.style.scrollBehavior = smooth ? 'smooth' : 'auto';
+    container.scrollTo({ top: container.scrollHeight });
     
-    // Small delay to batch multiple scroll requests
-    scrollTimeoutRef.current = setTimeout(() => {
-      const container = messagesContainerRef.current;
-      if (!container) return;
-      
-      // Only auto-scroll if content exceeds container height (scrollbar is active)
-      const hasScrollbar = container.scrollHeight > container.clientHeight;
-      if (!hasScrollbar) return;
-      
-      // Smooth scroll to bottom of the container only (not the page)
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth"
-      });
-    }, 50);
+    // Reset behavior shortly after a smooth scroll completes
+    if (smooth) {
+      window.setTimeout(() => {
+        if (!messagesContainerRef.current) return;
+        container.style.scrollBehavior = prev || 'auto';
+      }, 450);
+    }
   };
 
   // Send initial message immediately on mount (optimistic UI)
@@ -61,7 +69,26 @@ const AgentforceChat = ({
 
   // Auto-scroll when messages change or typing indicator appears
   useEffect(() => {
-    scrollToBottom();
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // If we are currently streaming, batch updates and use instant scroll
+    if (isStreaming) {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = setTimeout(() => {
+        scrollToBottom({ smooth: false });
+      }, 100);
+    } else {
+      // If we just finished streaming, do one smooth scroll
+      if (wasStreamingRef.current) {
+        scrollToBottom({ smooth: true });
+      } else {
+        // For non-stream changes (e.g., user sends message), also smooth
+        scrollToBottom({ smooth: true });
+      }
+    }
+
+    wasStreamingRef.current = isStreaming;
   }, [messages, isStreaming]);
 
   const handleSendMessage = async () => {
@@ -95,7 +122,11 @@ const AgentforceChat = ({
         </div>
 
         {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto scroll-smooth p-4 bg-chat-background">
+        <div 
+          ref={messagesContainerRef} 
+          className="flex-1 min-h-0 overflow-y-auto p-4 bg-chat-background"
+          style={{ overscrollBehavior: 'contain', scrollbarGutter: 'stable' }}
+        >
           {messages.map(message => <ChatMessage key={message.id} message={message.text} isUser={message.isUser} />)}
           {(() => {
           const lastMessage = messages[messages.length - 1];
