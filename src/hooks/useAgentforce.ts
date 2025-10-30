@@ -48,9 +48,6 @@ export function useAgentforce(): UseAgentforceReturn {
       return; // Only one chunk, no need to split
     }
 
-    // Remove the original message
-    setMessages(prev => prev.filter(msg => msg.id !== messageId));
-
     // Render chunks sequentially with delays
     chunks.forEach((chunk, index) => {
       const timeout = setTimeout(() => {
@@ -211,31 +208,17 @@ export function useAgentforce(): UseAgentforceReturn {
                   const content = parsed.content;
               
                   if (content) {
+                    // Create typing indicator on first chunk (if not already created)
                     if (!assistantMessageCreated) {
                       assistantMessageCreated = true;
                       setMessages(prev => [
                         ...prev,
-                        { id: assistantMessageId, text: String(content), isUser: false }
+                        { id: assistantMessageId, text: '', isUser: false } // Empty = typing indicator
                       ]);
-                      assistantText = String(content);
-                    } else {
-                      setMessages(prev =>
-                        prev.map(msg => {
-                          if (msg.id !== assistantMessageId) return msg;
-                          
-                          const currentText = msg.text || '';
-                          const newContent = String(content);
-                          
-                          if (newContent.startsWith(currentText) && newContent.length > currentText.length) {
-                            assistantText = newContent;
-                            return { ...msg, text: newContent };
-                          }
-                          
-                          assistantText = currentText + newContent;
-                          return { ...msg, text: assistantText };
-                        })
-                      );
                     }
+                    
+                    // Accumulate text silently (no UI update during stream)
+                    assistantText += String(content);
                   }
                 } catch (e) {
                   console.warn('Failed to parse SSE data:', data, e);
@@ -244,24 +227,24 @@ export function useAgentforce(): UseAgentforceReturn {
             }
           }
 
+          // Remove typing indicator
+          setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
+
           if (!assistantText) {
-            if (!assistantMessageCreated) {
-              setMessages(prev => [
-                ...prev,
-                { id: assistantMessageId, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?", isUser: false }
-              ]);
-            } else {
-              setMessages(prev => 
-                prev.map(msg => 
-                  msg.id === assistantMessageId 
-                    ? { ...msg, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?" }
-                    : msg
-                )
-              );
-            }
-          } else {
-            // Check for [[BREAK]] delimiter and split if found
+            setMessages(prev => [
+              ...prev,
+              { id: assistantMessageId, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?", isUser: false }
+            ]);
+          } else if (assistantText.includes('[[BREAK]]')) {
+            // Render chunks sequentially
             await splitAndRenderChunks(assistantMessageId, assistantText);
+          } else {
+            // Render as single message immediately
+            setMessages(prev => [...prev, {
+              id: assistantMessageId,
+              text: assistantText,
+              isUser: false
+            }]);
           }
 
         } catch (err) {
@@ -366,36 +349,17 @@ export function useAgentforce(): UseAgentforceReturn {
               const content = parsed.content;
           
           if (content) {
-            // Create assistant message on first content chunk
+            // Create typing indicator on first chunk (if not already created)
             if (!assistantMessageCreated) {
               assistantMessageCreated = true;
               setMessages(prev => [
                 ...prev,
-                { id: assistantMessageId, text: String(content), isUser: false }
+                { id: assistantMessageId, text: '', isUser: false } // Empty = typing indicator
               ]);
-              assistantText = String(content);
-            } else {
-              // Update existing assistant message
-              setMessages(prev =>
-                prev.map(msg => {
-                  if (msg.id !== assistantMessageId) return msg;
-                  
-                  const currentText = msg.text || '';
-                  const newContent = String(content);
-                  
-                  // If incoming content starts with current text, it's an aggregate - replace
-                  if (newContent.startsWith(currentText) && newContent.length > currentText.length) {
-                    console.log('[dedup] Detected aggregate, replacing');
-                    assistantText = newContent;
-                    return { ...msg, text: newContent };
-                  }
-                  
-                  // Otherwise, append as delta
-                  assistantText = currentText + newContent;
-                  return { ...msg, text: assistantText };
-                })
-              );
             }
+            
+            // Accumulate text silently (no UI update during stream)
+            assistantText += String(content);
               }
             } catch (e) {
               console.warn('Failed to parse SSE data:', data, e);
@@ -404,28 +368,26 @@ export function useAgentforce(): UseAgentforceReturn {
         }
       }
 
+      // Remove typing indicator
+      setMessages(prev => prev.filter(msg => msg.id !== assistantMessageId));
+
       // If no text was received, show a fallback message
       if (!assistantText) {
         console.warn('[hook] Stream completed but no content received');
-        if (!assistantMessageCreated) {
-          // Create message with fallback text if it was never created
-          setMessages(prev => [
-            ...prev,
-            { id: assistantMessageId, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?", isUser: false }
-          ]);
-        } else {
-          // Update existing message with fallback text
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === assistantMessageId 
-                ? { ...msg, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?" }
-                : msg
-            )
-          );
-        }
-      } else {
-        // Check for [[BREAK]] delimiter and split if found
+        setMessages(prev => [
+          ...prev,
+          { id: assistantMessageId, text: "Hmm, I didn't quite catch that — could you try rephrasing your question?", isUser: false }
+        ]);
+      } else if (assistantText.includes('[[BREAK]]')) {
+        // Render chunks sequentially
         await splitAndRenderChunks(assistantMessageId, assistantText);
+      } else {
+        // Render as single message immediately
+        setMessages(prev => [...prev, {
+          id: assistantMessageId,
+          text: assistantText,
+          isUser: false
+        }]);
       }
 
     } catch (err) {
